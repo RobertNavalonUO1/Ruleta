@@ -6,7 +6,7 @@ import ParEnum
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "com.api.ruletaeuropea.data.entity.Numero")
+@Entity(tableName = "Numero")
 data class Numero(
     @PrimaryKey val Numero: Int,
     val Color: ColorEnum,

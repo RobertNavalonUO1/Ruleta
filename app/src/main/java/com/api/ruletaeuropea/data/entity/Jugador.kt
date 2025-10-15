@@ -3,7 +3,7 @@ package com.api.ruletaeuropea.data.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "com.api.ruletaeuropea.data.entity.Jugador")
+@Entity(tableName = "Jugador")
 data class Jugador(
     @PrimaryKey val NombreJugador: String,
     val Email: String? = null,

@@ -3,7 +3,7 @@ package com.api.ruletaeuropea.data.entity
 import androidx.room.*
 
 @Entity(
-    tableName = "com.api.ruletaeuropea.data.entity.Historial",
+    tableName = "Historial",
     foreignKeys = [
         ForeignKey(
             entity = Jugador::class,

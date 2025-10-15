@@ -6,13 +6,13 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface HistorialDao {
+
     @Insert
     suspend fun insertar(reg: Historial): Long
 
-    @Query("SELECT * FROM com.api.ruletaeuropea.data.entity.Historial WHERE NombreJugador = :nombre ORDER BY Fecha DESC")
+    @Query("SELECT * FROM Historial WHERE NombreJugador = :nombre ORDER BY Fecha DESC")
     fun verHistorial(nombre: String): Flow<List<Historial>>
 
-    @Query("DELETE FROM com.api.ruletaeuropea.data.entity.Historial")
+    @Query("DELETE FROM Historial")
     suspend fun limpiar()
 }
-
