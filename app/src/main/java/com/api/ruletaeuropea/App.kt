@@ -2,7 +2,8 @@ package com.api.ruletaeuropea
 
 import android.app.Application
 import androidx.room.Room
-import com.api.ruletaeuropea.data.RuletaDatabase
+import com.api.ruletaeuropea.data.db.RuletaDatabase
+
 
 class App : Application() {
     companion object {
