@@ -1,9 +1,10 @@
 package com.api.ruletaeuropea.data.db
 
 import com.api.ruletaeuropea.data.model.CategoriaApostada
-import ColorEnum
-import MitadEnum
-import ParEnum
+import com.api.ruletaeuropea.data.model.ColorEnum
+import com.api.ruletaeuropea.data.model.ParEnum
+import com.api.ruletaeuropea.data.model.MitadEnum
+
 import androidx.room.TypeConverter
 
 class Converters {
