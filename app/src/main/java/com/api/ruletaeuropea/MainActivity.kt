@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import com.api.ruletaeuropea.pantallas.PantallaApuestas
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -13,7 +14,7 @@ class MainActivity : ComponentActivity() {
             MaterialTheme {
                 Text("¡Bienvenida a RuleEuropa!")
             }
-            RuletaGrid()
+            PantallaApuestas()
         }
     }
 }
