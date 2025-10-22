@@ -42,10 +42,13 @@ dependencies {
     implementation("androidx.compose.material3:material3:1.2.0")
     implementation("androidx.compose.ui:ui-tooling-preview:1.5.3")
     debugImplementation("androidx.compose.ui:ui-tooling:1.5.3")
+    implementation("com.airbnb.android:lottie-compose:6.0.0")
 
     val navVersion = "2.8.2"
     implementation("androidx.navigation:navigation-fragment-ktx:$navVersion")
     implementation("androidx.navigation:navigation-ui-ktx:$navVersion")
+    implementation("androidx.navigation:navigation-compose:2.8.2")
+
 
     // Room
     implementation("androidx.room:room-runtime:2.6.1")
