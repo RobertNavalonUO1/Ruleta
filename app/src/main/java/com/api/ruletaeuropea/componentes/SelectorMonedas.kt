@@ -5,7 +5,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,9 +27,12 @@ import com.api.ruletaeuropea.R
         verticalAlignment = Alignment.CenterVertically
     ) {
         listOf(
-            Pair(1, R.drawable.moneda1),
-            Pair(5, R.drawable.moneda5),
-            Pair(10, R.drawable.moneda10)
+            Pair(1, R.drawable.coin1),
+            Pair(5, R.drawable.coin5),
+            Pair(10, R.drawable.coin10),
+            Pair(20, R.drawable.coin20),
+            Pair(50, R.drawable.coin50),
+            Pair(100, R.drawable.coin100)
         ).forEachIndexed { index, (valor, imagenRes) ->
             MonedaChip(
                 valor = valor,
@@ -38,7 +40,7 @@ import com.api.ruletaeuropea.R
                 seleccionado = valor == monedaSeleccionada,
                 onClick = { onMonedaSeleccionada(valor) }
             )
-            if (index < 2) Spacer(Modifier.width(2.dp)) // 👈 separación fija entre monedas
+            if (index < 5) Spacer(Modifier.width(4.dp)) // un pelín más de separación
         }
     }
 }
@@ -54,7 +56,7 @@ fun MonedaChip(
 
     Box(
         modifier = Modifier
-            .size(40.dp)
+            .size(48.dp)
             .border(2.dp, bordeColor, CircleShape)
             .clip(CircleShape)
             .clickable { onClick() },
@@ -63,7 +65,7 @@ fun MonedaChip(
         Image(
             painter = painterResource(id = imagenRes),
             contentDescription = "Moneda $valor",
-            modifier = Modifier.size(40.dp)
+            modifier = Modifier.size(48.dp)
         )
     }
 }

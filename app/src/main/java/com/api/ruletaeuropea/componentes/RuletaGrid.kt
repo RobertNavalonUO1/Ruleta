@@ -17,9 +17,9 @@ import androidx.compose.ui.unit.sp
 import com.api.ruletaeuropea.Modelo.Apuesta
 import com.api.ruletaeuropea.R
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.res.painterResource
-
-import com.api.ruletaeuropea.componentes.SelectorMonedas
+import androidx.compose.foundation.layout.BoxScope
 
 // Paleta y dimensiones
 private val TableGreen = Color(0xFF157A3E)
@@ -49,6 +49,100 @@ private fun colorForNumber(n: Int): Color = when {
     else -> RouletteBlack
 }
 
+private fun coinRes(valor: Int): Int = when (valor) {
+    1 -> R.drawable.coin1
+    5 -> R.drawable.coin5
+    10 -> R.drawable.coin10
+    20 -> R.drawable.coin20
+    50 -> R.drawable.coin50
+    100 -> R.drawable.coin100
+    else -> R.drawable.coin1
+}
+
+@Composable
+private fun BoxScope.CoinsOverlay(apuestas: List<Apuesta>, coinSize: Dp = 40.dp) {
+    if (apuestas.isEmpty()) return
+
+    val total = apuestas.sumOf { it.valorMoneda }
+    val counts = apuestas.groupingBy { it.valorMoneda }.eachCount().toList().sortedBy { it.first }
+    val maxTypesToShow = 3
+    val display = counts.take(maxTypesToShow)
+
+    // Etiqueta de total en la esquina superior izquierda
+    Box(
+        modifier = Modifier
+            .align(Alignment.TopStart)
+            .padding(2.dp)
+            .background(Gold, RoundedCornerShape(6.dp))
+            .padding(horizontal = 4.dp, vertical = 1.dp)
+    ) {
+        Text(
+            text = total.toString(),
+            color = Color.Black,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+
+    // Offsets horizontales según cantidad de tipos a mostrar
+    val offsets = when (display.size) {
+        1 -> listOf(0.dp)
+        2 -> listOf((-12).dp, 12.dp)
+        else -> listOf((-16).dp, 0.dp, 16.dp)
+    }
+
+    display.forEachIndexed { index, (denom, count) ->
+        // Cada moneda con su badge de cantidad si > 1
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .offset(x = offsets.getOrElse(index) { 0.dp })
+                .size(coinSize)
+        ) {
+            Image(
+                painter = painterResource(id = coinRes(denom)),
+                contentDescription = "Apuesta $denom",
+                modifier = Modifier.matchParentSize()
+            )
+            if (count > 1) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(1.dp)
+                        .background(Color.Black.copy(alpha = 0.75f), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 3.dp, vertical = 0.dp)
+                ) {
+                    Text(
+                        text = "x$count",
+                        color = Color.White,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+
+    // Indicador de adicionales si hay más tipos de monedas que no se muestran
+    val remainingTypes = counts.size - display.size
+    if (remainingTypes > 0) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(2.dp)
+                .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(6.dp))
+                .padding(horizontal = 3.dp, vertical = 0.dp)
+        ) {
+            Text(
+                text = "+$remainingTypes",
+                color = Color.White,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
 @Composable
 fun RuletaGrid(
     monedaSeleccionada: Int,
@@ -74,6 +168,9 @@ fun RuletaGrid(
                 contentAlignment = Alignment.Center
             ) {
                 Text("0", color = IvoryText, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
+                // Overlay de monedas para apuestas al 0
+                val apuestasCero = apuestas.filter { it.numero == 0 }
+                CoinsOverlay(apuestasCero, coinSize = 44.dp)
             }
 
             // Cuadrícula 12x3
@@ -149,21 +246,9 @@ private fun NumberRow(
                     fontWeight = FontWeight.Bold
                 )
 
-                // 🪙 Si hay apuesta en este número, mostramos la moneda
-                apuestas.filter { it.numero == numero }.forEach { apuesta ->
-                    Image(
-                        painter = painterResource(
-                            id = when (apuesta.valorMoneda) {
-                                1 -> R.drawable.moneda1
-                                5 -> R.drawable.moneda5
-                                10 -> R.drawable.moneda10
-                                else -> R.drawable.moneda1
-                            }
-                        ),
-                        contentDescription = "Apuesta ${apuesta.valorMoneda}",
-                        modifier = Modifier.size(36.dp) // moneda pequeña encima
-                    )
-                }
+                // Monedas agrupadas + total
+                val apuestasNumero = apuestas.filter { it.numero == numero }
+                CoinsOverlay(apuestasNumero, coinSize = 44.dp)
             }
 
         }
@@ -193,22 +278,12 @@ private fun RowScope.DozenBox(
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
         )
-        apuestas.filter { it.numero == codigo }.forEach { apuesta ->
-            Image(
-                painter = painterResource(
-                    id = when (apuesta.valorMoneda) {
-                        1 -> R.drawable.moneda1
-                        5 -> R.drawable.moneda5
-                        10 -> R.drawable.moneda10
-                        else -> R.drawable.moneda1
-                    }
-                ),
-                contentDescription = "Apuesta ${apuesta.valorMoneda}",
-                modifier = Modifier.size(36.dp) // 👈 más grande
-            )
+
+        val apuestasDozen = apuestas.filter { it.numero == codigo }
+        CoinsOverlay(apuestasDozen, coinSize = 40.dp)
     }
 }
-}
+
 @Composable
 private fun RowScope.OutsideBetBox(
     label: String? = null,
@@ -241,25 +316,7 @@ private fun RowScope.OutsideBetBox(
             )
         }
 
-        apuestas.filter { it.numero == codigo }.forEach { apuesta ->
-            Image(
-                painter = painterResource(
-                    id = when (apuesta.valorMoneda) {
-                        1 -> R.drawable.moneda1
-                        5 -> R.drawable.moneda5
-                        10 -> R.drawable.moneda10
-                        else -> R.drawable.moneda1
-                    }
-                ),
-                contentDescription = "Apuesta ${apuesta.valorMoneda}",
-                modifier = Modifier.size(36.dp)
-            )
-        }
+        val apuestasOutside = apuestas.filter { it.numero == codigo }
+        CoinsOverlay(apuestasOutside, coinSize = 40.dp)
     }
 }
-
-
-
-
-
-
