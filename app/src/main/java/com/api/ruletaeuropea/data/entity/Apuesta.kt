@@ -2,6 +2,7 @@ package com.api.ruletaeuropea.data.entity
 import androidx.room.*
 import com.api.ruletaeuropea.data.model.CategoriaApostada
 
+
 @Entity(
     tableName = "Apuesta",
     foreignKeys = [
