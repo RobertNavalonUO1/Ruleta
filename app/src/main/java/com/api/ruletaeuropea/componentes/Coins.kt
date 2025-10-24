@@ -12,7 +12,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import com.api.ruletaeuropea.R
-import com.airbnb.lottie.compose.*
 
 
 @Composable
@@ -36,4 +35,3 @@ fun CoinsDisplay(cantidad: Int, modifier: Modifier = Modifier) {
         )
     }
 }
-
