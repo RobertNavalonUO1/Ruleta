@@ -9,6 +9,11 @@ import com.api.ruletaeuropea.pantallas.PantallaApuestas
 import com.api.ruletaeuropea.pantallas.PantallaRuletaGirando
 import com.api.ruletaeuropea.Modelo.Apuesta
 import com.api.ruletaeuropea.data.entity.Jugador
+import com.api.ruletaeuropea.pantallas.PantallaIntro
+import com.api.ruletaeuropea.pantallas.PantallaLogin
+import com.api.ruletaeuropea.pantallas.PantallaMenu
+import com.api.ruletaeuropea.pantallas.PantallaRanking
+import com.api.ruletaeuropea.pantallas.PantallaHistorial
 
 @Composable
 fun AppNavigation(
@@ -16,7 +21,27 @@ fun AppNavigation(
     jugador: MutableState<Jugador>,
     apuestas: MutableState<List<Apuesta>>
 ) {
-    NavHost(navController = navController, startDestination = "apuestas") {
+    NavHost(navController = navController, startDestination = "intro") {
+
+        composable("intro") {
+            PantallaIntro(navController)
+        }
+
+        composable("login") {
+            PantallaLogin(navController = navController, jugador = jugador)
+        }
+
+        composable("menu") {
+            PantallaMenu(navController = navController, jugador = jugador)
+        }
+
+        composable("ranking") {
+            PantallaRanking()
+        }
+
+        composable("historial") {
+            PantallaHistorial(jugadorNombre = jugador.value.NombreJugador)
+        }
 
         composable("apuestas") {
             PantallaApuestas(
