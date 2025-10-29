@@ -1,5 +1,6 @@
 package com.api.ruletaeuropea.pantallas
 
+import com.api.ruletaeuropea.App
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,9 +23,12 @@ import com.api.ruletaeuropea.data.entity.Jugador
 import com.api.ruletaeuropea.logica.calcularPago
 import com.api.ruletaeuropea.logica.evaluarApuesta
 import com.api.ruletaeuropea.logica.tipoApuesta
+import com.api.ruletaeuropea.logica.construirApuestaCompleta
 import kotlinx.coroutines.delay
 import com.airbnb.lottie.compose.*
-
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import com.api.ruletaeuropea.data.entity.Ruleta
 @Composable
 fun PantallaRuletaGirando(
     navController: NavController,
@@ -68,7 +72,7 @@ fun PantallaRuletaGirando(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 🎯 Imagen de ruleta girando
+                // Imagen de ruleta girando
                 val composition by rememberLottieComposition(LottieCompositionSpec.Asset("ruleta_animada.json"))
                 val progress by animateLottieCompositionAsState(
                     composition = composition,
@@ -82,7 +86,7 @@ fun PantallaRuletaGirando(
                 )
 
 
-                // 📋 Panel de resumen de apuesta
+                // Panel de resumen de apuesta
                 Column(
                     modifier = Modifier
                         .background(Color.Gray.copy(alpha = 0.6f), shape = RoundedCornerShape(12.dp))
@@ -120,7 +124,22 @@ fun PantallaRuletaGirando(
             // Actualiza el saldo del jugador
             LaunchedEffect(pagoTotal) {
                 onActualizarSaldo(pagoTotal)
+
+                val daoRuleta = App.database.ruletaDao()
+                val daoApuesta = App.database.apuestaDao()
+
+                val idRuleta = withContext(Dispatchers.IO) {
+                    daoRuleta.insertar(Ruleta(NumeroGanador = resultado!!))
+                }
+
+                withContext(Dispatchers.IO) {
+                    apuestas.value.forEach {
+                        val apuestaCompleta = construirApuestaCompleta(it, jugador, resultado!!, idRuleta)
+                        daoApuesta.insertar(apuestaCompleta)
+                    }
+                }
             }
+
 
             Column(
                 modifier = Modifier

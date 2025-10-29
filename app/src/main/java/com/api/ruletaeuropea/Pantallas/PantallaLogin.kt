@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import com.api.ruletaeuropea.R
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -22,6 +23,14 @@ import com.api.ruletaeuropea.data.entity.Jugador
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 
 @Composable
 fun PantallaLogin(
@@ -31,73 +40,125 @@ fun PantallaLogin(
     val nombreState = remember { mutableStateOf("") }
     val contrasenaState = remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
+    val dorado = Color(0xFFFFD700)
+    val fondo = painterResource(id = R.drawable.fondo)
+    val logo = painterResource(id = R.drawable.logoinico)
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center
+            .background(Color.Black)
     ) {
-        Text("Inicia sesión o crea tu usuario")
-        Spacer(Modifier.height(12.dp))
-
-        OutlinedTextField(
-            value = nombreState.value,
-            onValueChange = { nombreState.value = it },
-            label = { Text("Nombre de usuario") },
-            singleLine = true
+        Image(
+            painter = fondo,
+            contentDescription = "Fondo decorativo",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
         )
 
-        Spacer(Modifier.height(8.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 🖼️ Lado izquierdo: logo
+            Image(
+                painter = logo,
+                contentDescription = "Logo de inicio",
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(end = 24.dp),
+                contentScale = ContentScale.Fit
+            )
 
-        OutlinedTextField(
-            value = contrasenaState.value,
-            onValueChange = { contrasenaState.value = it },
-            label = { Text("Contraseña (opcional)") },
-            singleLine = true
-        )
+            // Lado derecho: formulario
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "Inicia sesión o crea tu usuario",
+                    color = dorado,
+                    style = MaterialTheme.typography.headlineMedium
+                )
 
-        Spacer(Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = nombreState.value,
+                    onValueChange = { nombreState.value = it },
+                    label = { Text("Nombre de usuario", color = dorado) },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = dorado,
+                        unfocusedTextColor = dorado,
+                        focusedBorderColor = dorado,
+                        unfocusedBorderColor = dorado,
+                        cursorColor = dorado
+                    )
+                )
 
-        Button(onClick = {
+                OutlinedTextField(
+                    value = contrasenaState.value,
+                    onValueChange = { contrasenaState.value = it },
+                    label = { Text("Contraseña (opcional)", color = dorado) },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = dorado,
+                        unfocusedTextColor = dorado,
+                        focusedBorderColor = dorado,
+                        unfocusedBorderColor = dorado,
+                        cursorColor = dorado
+                    )
+                )
 
-            jugador.value = Jugador(NombreJugador = "Invitado", NumMonedas = 1000)
-            navController.navigate("menu") {
-                popUpTo("login") { inclusive = true }
-            }
-        }) {
-            Text("Entrar sin usuario")
-        }
-
-        Spacer(Modifier.height(8.dp))
-
-        Button(onClick = {
-            val nombre = nombreState.value.trim()
-            if (nombre.isNotEmpty()) {
-                scope.launch {
-                    val user = withContext(Dispatchers.IO) {
-                        val dao = App.database.jugadorDao()
-                        val existente = dao.obtenerPorNombre(nombre)
-                        if (existente == null) {
-                            val nuevo = Jugador(
-                                NombreJugador = nombre,
-                                Contrasena = contrasenaState.value.takeIf { it.isNotBlank() },
-                                NumMonedas = 1000
-                            )
-                            dao.insertar(nuevo)
-                            nuevo
-                        } else {
-                            existente
+                Button(
+                    onClick = {
+                        jugador.value = Jugador(NombreJugador = "Invitado", NumMonedas = 1000)
+                        navController.navigate("menu") {
+                            popUpTo("login") { inclusive = true }
                         }
-                    }
-                    jugador.value = user
-                    navController.navigate("menu") {
-                        popUpTo("login") { inclusive = true }
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = dorado)
+                ) {
+                    Text("Entrar sin usuario", color = Color.Black)
+                }
+
+                Button(
+                    onClick = {
+                        val nombre = nombreState.value.trim()
+                        if (nombre.isNotEmpty()) {
+                            scope.launch {
+                                val user = withContext(Dispatchers.IO) {
+                                    val dao = App.database.jugadorDao()
+                                    val existente = dao.obtenerPorNombre(nombre)
+                                    if (existente == null) {
+                                        val nuevo = Jugador(
+                                            NombreJugador = nombre,
+                                            Contrasena = contrasenaState.value.takeIf { it.isNotBlank() },
+                                            NumMonedas = 1000
+                                        )
+                                        dao.insertar(nuevo)
+                                        nuevo
+                                    } else {
+                                        existente
+                                    }
+                                }
+                                jugador.value = user
+                                navController.navigate("menu") {
+                                    popUpTo("login") { inclusive = true }
+                                }
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = dorado)
+                ) {
+                    Text("Guardar y entrar", color = Color.Black)
                 }
             }
-        }) {
-            Text("Guardar y entrar")
         }
     }
 }
