@@ -230,7 +230,12 @@ fun PantallaRuletaGirando(
                         modifier = Modifier
                             .size(200.dp)
                             .clickable {
-                                // lógica de salida
+                                // Limpia las apuestas y vuelve al menú principal
+                                apuestas.value = emptyList()
+                                navController.navigate("menu") {
+                                    popUpTo("menu") { inclusive = true } // limpia el historial
+                                    launchSingleTop = true // evita duplicar pantallas
+                                }
                             }
                     )
                 }

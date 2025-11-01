@@ -148,17 +148,15 @@ private fun GoldButton(
     val haptics = LocalHapticFeedback.current
     val animatedElevation by animateDpAsState(targetValue = if (pressed) 6.dp else 12.dp)
 
-    val transition = rememberInfiniteTransition(label = "sheen-menu")
-
     val shimmerX = remember { Animatable(-120f) }
 
     LaunchedEffect(Unit) {
-        while(true) {
+        while (true) {
             shimmerX.animateTo(
                 targetValue = 720f,
                 animationSpec = tween(2400, easing = LinearEasing)
             )
-            shimmerX.snapTo(-120f) // reinicia el ciclo
+            shimmerX.snapTo(-120f)
         }
     }
 
@@ -189,9 +187,12 @@ private fun GoldButton(
             .semantics { contentDescription = text },
         contentAlignment = Alignment.Center
     ) {
-        val anchoMaximo = maxWidth
         val density = LocalDensity.current
-        val xDp = with(density) { shimmerX.value.dp.coerceIn(0.dp, anchoMaximo) }
+        val xDp = with(density) {
+            val maxPx = maxWidth.toPx()                      // maxWidth en pixels
+            val valuePx = shimmerX.value.coerceIn(0f, maxPx) // coerceIn en pixels
+            valuePx.toDp()                                  // convertir a Dp
+        }
 
         // Texto del botón
         Text(
@@ -224,3 +225,4 @@ private fun GoldButton(
         }
     }
 }
+
