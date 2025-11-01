@@ -2,7 +2,6 @@ package com.api.ruletaeuropea.pantallas
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -26,6 +25,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,6 +51,13 @@ import androidx.navigation.NavController
 import com.api.ruletaeuropea.data.entity.Jugador
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.fillMaxHeight
+
 
 @Composable
 fun PantallaMenu(
@@ -138,24 +145,25 @@ private fun GoldButton(
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(targetValue = if (pressed) 0.97f else 1f, label = "press-scale")
+    val haptics = LocalHapticFeedback.current
+    val animatedElevation by animateDpAsState(targetValue = if (pressed) 6.dp else 12.dp)
 
-    // Brillo animado
     val transition = rememberInfiniteTransition(label = "sheen-menu")
-    val shimmerX by transition.animateFloat(
-        initialValue = -120f,
-        targetValue = 720f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2400, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "sheen-x-menu"
-    )
+
+    val shimmerX = remember { Animatable(-120f) }
+
+    LaunchedEffect(Unit) {
+        while(true) {
+            shimmerX.animateTo(
+                targetValue = 720f,
+                animationSpec = tween(2400, easing = LinearEasing)
+            )
+            shimmerX.snapTo(-120f) // reinicia el ciclo
+        }
+    }
 
     val fillGradient = Brush.verticalGradient(
-        colors = listOf(
-            Color(0xFFFFD700), // Gold
-            Color(0xFFFFB300)  // Amber
-        )
+        colors = listOf(Color(0xFFFFD700), Color(0xFFFFB300))
     )
 
     val borderGradient = Brush.linearGradient(
@@ -164,20 +172,12 @@ private fun GoldButton(
         end = Offset(300f, 120f)
     )
 
-    val density = LocalDensity.current
-    val haptics = LocalHapticFeedback.current
-    val animatedElevation by animateDpAsState(targetValue = if (pressed) 6.dp else 12.dp)
-
-    Box(
+    BoxWithConstraints(
         modifier = modifier
             .scale(scale)
             .clip(RoundedCornerShape(16.dp))
             .background(brush = fillGradient)
-            .border(
-                width = 2.dp,
-                brush = borderGradient,
-                shape = RoundedCornerShape(16.dp)
-            )
+            .border(2.dp, borderGradient, RoundedCornerShape(16.dp))
             .shadow(animatedElevation, RoundedCornerShape(16.dp), clip = false)
             .clickable(
                 interactionSource = interaction,
@@ -189,6 +189,11 @@ private fun GoldButton(
             .semantics { contentDescription = text },
         contentAlignment = Alignment.Center
     ) {
+        val anchoMaximo = maxWidth
+        val density = LocalDensity.current
+        val xDp = with(density) { shimmerX.value.dp.coerceIn(0.dp, anchoMaximo) }
+
+        // Texto del botón
         Text(
             text = text,
             color = Color(0xFF1A1A1A),
@@ -197,7 +202,7 @@ private fun GoldButton(
             modifier = Modifier.padding(horizontal = 16.dp)
         )
 
-        val xDp = with(density) { shimmerX.dp }
+        // Shimmer
         Box(modifier = Modifier.matchParentSize()) {
             Box(
                 modifier = Modifier
