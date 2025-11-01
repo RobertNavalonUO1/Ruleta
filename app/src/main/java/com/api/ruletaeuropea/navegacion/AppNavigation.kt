@@ -44,7 +44,7 @@ fun AppNavigation(
         }
 
         composable("ranking") {
-            PantallaRanking()
+            PantallaRanking(navController = navController)
         }
 
         composable("historial") {
