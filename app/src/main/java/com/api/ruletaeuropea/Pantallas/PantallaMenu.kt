@@ -1,10 +1,8 @@
 package com.api.ruletaeuropea.pantallas
 
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
@@ -12,26 +10,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,13 +33,7 @@ import androidx.navigation.NavController
 import com.api.ruletaeuropea.data.entity.Jugador
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.tween
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.fillMaxHeight
-
 
 @Composable
 fun PantallaMenu(
@@ -75,14 +51,15 @@ fun PantallaMenu(
             .fillMaxSize()
             .background(background)
             .statusBarsPadding()
-            .navigationBarsPadding(),
-        contentAlignment = Alignment.Center
+            .navigationBarsPadding()
     ) {
+        // Column principal: solo botones Jugar, Ranking e Historial
         Column(
             modifier = Modifier
                 .widthIn(max = 520.dp)
-                .padding(horizontal = 20.dp, vertical = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterVertically),
+                .padding(horizontal = 20.dp, vertical = 24.dp)
+                .align(Alignment.Center), // centramos la columna
+            verticalArrangement = Arrangement.spacedBy(14.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
@@ -94,19 +71,42 @@ fun PantallaMenu(
 
             Spacer(Modifier.height(6.dp))
 
+            // MenuButtons
             MenuButtons(
                 onPlay = { navController.navigate("apuestas") },
                 onRanking = { navController.navigate("ranking") },
-                onHistory = { navController.navigate("historial") },
-                onSettings = { navController.navigate("ajustes") },
-                onExit = {
-                    jugador.value = Jugador(NombreJugador = "Invitado", NumMonedas = 1000)
-                    navController.navigate("login") {
-                        popUpTo("menu") { inclusive = true }
-                    }
-                }
+                onHistory = { navController.navigate("historial") }
             )
         }
+
+        /*  Botón Ajustes separado, abajo derecha
+        PlantillaBoton(
+            text = "Ajustes",
+            onClick = { navController.navigate("ajustes") },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 100.dp, end = 35.dp)
+                .width(140.dp)
+                .height(60.dp)
+        )*/
+
+        // 🔹 Botón Salir separado, abajo derecha, debajo de Ajustes
+        PlantillaBoton(
+            text = "Salir",
+            onClick = {
+                jugador.value = Jugador(NombreJugador = "Invitado", NumMonedas = 1000)
+                navController.navigate("login") {
+                    popUpTo("menu") { inclusive = true }
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 24.dp, end = 35.dp)
+                .width(140.dp)
+                .height(60.dp),
+            colors = listOf(Color.White, Color(0xFF666666)), // 🔹 nuevo color opcional
+            textColor = Color.Black // 🔹 nuevo color de texto opcional
+        )
     }
 }
 
@@ -114,9 +114,7 @@ fun PantallaMenu(
 private fun MenuButtons(
     onPlay: () -> Unit,
     onRanking: () -> Unit,
-    onHistory: () -> Unit,
-    onSettings: () -> Unit,
-    onExit: () -> Unit
+    onHistory: () -> Unit
 ) {
     val buttonModifier = Modifier
         .fillMaxWidth(0.95f)
@@ -131,11 +129,11 @@ private fun MenuButtons(
         GoldButton("Jugar", onPlay, buttonModifier)
         GoldButton("Ranking", onRanking, buttonModifier)
         GoldButton("Historial", onHistory, buttonModifier)
-        GoldButton("Ajustes", onSettings, buttonModifier)
-        GoldButton("Salir", onExit, buttonModifier)
+        // 🔹 Eliminado GoldButton("Ajustes") y GoldButton("Salir")
     }
 }
 
+// 🔹 GoldButton queda igual, no se modifica
 @Composable
 private fun GoldButton(
     text: String,
@@ -189,12 +187,11 @@ private fun GoldButton(
     ) {
         val density = LocalDensity.current
         val xDp = with(density) {
-            val maxPx = maxWidth.toPx()                      // maxWidth en pixels
-            val valuePx = shimmerX.value.coerceIn(0f, maxPx) // coerceIn en pixels
-            valuePx.toDp()                                  // convertir a Dp
+            val maxPx = maxWidth.toPx()
+            val valuePx = shimmerX.value.coerceIn(0f, maxPx)
+            valuePx.toDp()
         }
 
-        // Texto del botón
         Text(
             text = text,
             color = Color(0xFF1A1A1A),
@@ -203,7 +200,6 @@ private fun GoldButton(
             modifier = Modifier.padding(horizontal = 16.dp)
         )
 
-        // Shimmer
         Box(modifier = Modifier.matchParentSize()) {
             Box(
                 modifier = Modifier
@@ -225,4 +221,5 @@ private fun GoldButton(
         }
     }
 }
+
 
