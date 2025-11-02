@@ -29,6 +29,8 @@ import com.airbnb.lottie.compose.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.api.ruletaeuropea.data.entity.Ruleta
+import com.api.ruletaeuropea.data.entity.Historial
+
 @Composable
 fun PantallaRuletaGirando(
     navController: NavController,
@@ -131,18 +133,11 @@ fun PantallaRuletaGirando(
                 val daoRuleta = App.database.ruletaDao()
                 val daoApuesta = App.database.apuestaDao()
                 val daoJugador = App.database.jugadorDao()
+                val daoHistorial = App.database.historialDao()
 
                 //Inserta el resultado de la ruleta
                 val idRuleta = withContext(Dispatchers.IO) {
                     daoRuleta.insertar(Ruleta(NumeroGanador = resultado!!))
-                }
-
-                // Inserta las apuestas
-                withContext(Dispatchers.IO) {
-                    apuestas.value.forEach {
-                        val apuestaCompleta = construirApuestaCompleta(it, jugador, resultado!!, idRuleta)
-                        daoApuesta.insertar(apuestaCompleta)
-                    }
                 }
 
                 // Actualiza el saldo del jugador en la base de datos
@@ -150,8 +145,25 @@ fun PantallaRuletaGirando(
                     val jugadorActualizado = jugador.copy(NumMonedas = nuevoSaldo)
                     daoJugador.actualizar(jugadorActualizado)
                 }
-            }
 
+                // Guarda la apuesta en el historial
+                withContext(Dispatchers.IO) {
+                    apuestas.value.forEach { apuesta ->
+                        // Inserta la apuesta y obtiene su ID
+                        val apuestaCompleta = construirApuestaCompleta(apuesta, jugador, resultado!!, idRuleta)
+                        val idApuesta = daoApuesta.insertar(apuestaCompleta) // solo aquí se inserta
+
+                        // Inserta el registro en historial usando el ID de la apuesta
+                        val registroHistorial = Historial(
+                            NombreJugador = jugador.NombreJugador,
+                            NumApuesta = idApuesta,
+                            Resultado = resultado.toString(),
+                            SaldoDespues = nuevoSaldo
+                        )
+                        daoHistorial.insertar(registroHistorial)
+                    }
+                }
+            }
 
             Column(
                 modifier = Modifier
