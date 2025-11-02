@@ -59,7 +59,7 @@ fun PantallaRanking(navController: NavController) {
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
                 contentPadding = PaddingValues(bottom = 100.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(5.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 itemsIndexed(lista) { index, jugador ->
@@ -68,7 +68,6 @@ fun PantallaRanking(navController: NavController) {
             }
         }
 
-        // Botón Exit fijo arriba a la derecha
         BotonExit(
             onClick = {
                 navController.navigate("menu") {
@@ -76,8 +75,8 @@ fun PantallaRanking(navController: NavController) {
                 }
             },
             modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(bottom = 24.dp)
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 24.dp, end = 35.dp)
                 .width(140.dp)
                 .height(60.dp)
         )
@@ -93,9 +92,9 @@ private fun RankingCard(index: Int, jugador: Jugador) {
     Card(
         modifier = Modifier
             .fillMaxWidth(0.5f)
-            .height(60.dp),
+            .height(35.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(6.dp),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Box(
@@ -105,7 +104,7 @@ private fun RankingCard(index: Int, jugador: Jugador) {
                     brush = Brush.verticalGradient(
                         colors = listOf(amarilloClaro, amarilloBase, amarilloOscuro)
                     ),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(6.dp)
                 )
                 .padding(horizontal = 16.dp),
             contentAlignment = Alignment.CenterStart
@@ -121,6 +120,12 @@ private fun RankingCard(index: Int, jugador: Jugador) {
                     color = Color(0xFF1A1A1A),
                     fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
                 )
+
+                /* Cuando la clase apuesta tenga fecha y hora de la apuesta.
+                Text(
+                    text = "${apuesta.Fecha} ${apuesta.Hora}"
+                )*/
+
                 Text(
                     text = "${jugador.NumMonedas} C",
                     fontSize = 18.sp,
@@ -132,7 +137,7 @@ private fun RankingCard(index: Int, jugador: Jugador) {
     }
 }
 
-// Botón Exit independiente
+// Botón Exit
 @Composable
 fun BotonExit(onClick: () -> Unit, modifier: Modifier = Modifier) {
     val interaction = remember { MutableInteractionSource() }
