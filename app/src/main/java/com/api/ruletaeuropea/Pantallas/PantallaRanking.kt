@@ -24,6 +24,11 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.ui.draw.scale
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import androidx.compose.runtime.rememberCoroutineScope
+
 
 
 
@@ -32,6 +37,7 @@ fun PantallaRanking(navController: NavController) {
     val dao = App.database.jugadorDao()
     val rankingFlow = dao.verRanking(50)
     val lista by rankingFlow.collectAsState(initial = emptyList())
+    val scope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier
@@ -67,8 +73,9 @@ fun PantallaRanking(navController: NavController) {
                 }
             }
         }
-
-        BotonExit(
+        // Boton Exit
+        PlantillaBoton(
+            text = "Exit",
             onClick = {
                 navController.navigate("menu") {
                     popUpTo("ranking") { inclusive = true }
@@ -80,6 +87,30 @@ fun PantallaRanking(navController: NavController) {
                 .width(140.dp)
                 .height(60.dp)
         )
+
+        //Boton Borrar todos
+        PlantillaBoton(
+            text = "Borrar todos",
+            onClick = {
+                scope.launch {
+                    try {
+                        withContext(Dispatchers.IO) {
+                            App.database.jugadorDao().borrarTodos()
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 100.dp, end = 35.dp)
+                .width(140.dp)
+                .height(60.dp),
+            colors = listOf(Color.White, Color(0xFF666666)),
+            textColor = Color.Black
+        )
+
     }
 }
 
@@ -124,6 +155,9 @@ private fun RankingCard(index: Int, jugador: Jugador) {
                 /* Cuando la clase apuesta tenga fecha y hora de la apuesta.
                 Text(
                     text = "${apuesta.Fecha} ${apuesta.Hora}"
+                    fontSize = 18.sp,
+                    color = Color(0xFF1A1A1A),
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
                 )*/
 
                 Text(
@@ -137,9 +171,14 @@ private fun RankingCard(index: Int, jugador: Jugador) {
     }
 }
 
-// Botón Exit
 @Composable
-fun BotonExit(onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun PlantillaBoton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    colors: List<Color> = listOf(Color(0xFFFFD700), Color(0xFFFFB300)),
+    textColor: Color = Color.Black
+) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(targetValue = if (pressed) 0.97f else 1f, label = "press-scale")
@@ -148,22 +187,17 @@ fun BotonExit(onClick: () -> Unit, modifier: Modifier = Modifier) {
         modifier = modifier
             .scale(scale)
             .clip(RoundedCornerShape(16.dp))
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(Color(0xFFFFD700), Color(0xFFFFB300))
-                )
-            )
-            .clickable(
-                interactionSource = interaction,
-                indication = null
-            ) { onClick() },
+            .background(Brush.verticalGradient(colors = colors))
+            .clickable(interactionSource = interaction, indication = null) { onClick() },
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "Exit",
+            text = text,
             fontSize = 20.sp,
-            color = Color(0xFF1A1A1A),
-            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+            color = textColor
         )
     }
 }
+
+

@@ -10,7 +10,7 @@ import com.api.ruletaeuropea.data.model.CategoriaApostada
             entity = Jugador::class,
             parentColumns = ["NombreJugador"],
             childColumns = ["NombreJugador"],
-            onDelete = ForeignKey.NO_ACTION
+            onDelete = ForeignKey.CASCADE
         ),
         ForeignKey(
             entity = Ruleta::class,

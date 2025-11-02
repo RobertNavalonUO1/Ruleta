@@ -29,4 +29,7 @@ interface JugadorDao {
 
     @Delete
     suspend fun eliminar(jugador: Jugador)
+
+    @Query("DELETE FROM Jugador")
+    suspend fun borrarTodos()
 }

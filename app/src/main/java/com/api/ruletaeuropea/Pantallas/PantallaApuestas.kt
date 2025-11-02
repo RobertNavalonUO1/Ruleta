@@ -25,6 +25,12 @@ import com.api.ruletaeuropea.componentes.SelectorMonedas
 import com.api.ruletaeuropea.componentes.CoinsDisplay
 import com.api.ruletaeuropea.data.entity.Jugador
 import com.api.ruletaeuropea.componentes.RuletaGrid as RuletaGridComp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import androidx.compose.runtime.rememberCoroutineScope
+import com.api.ruletaeuropea.App
+
 
 @Composable
 fun PantallaApuestas(
@@ -34,6 +40,7 @@ fun PantallaApuestas(
 ) {
     var monedaSeleccionada by remember { mutableStateOf(1) }
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -72,7 +79,20 @@ fun PantallaApuestas(
                     onApuestaRealizada = { numero ->
                         val saldo = jugador.value.NumMonedas
                         if (saldo >= monedaSeleccionada) {
+                            // Actualizar numMonedas en la base de datos.
+                            scope.launch {
+                                withContext(Dispatchers.IO) {
+                                    App.database.jugadorDao()
+                                        .aplicarDeltaMonedas(jugador.value.NombreJugador, -monedaSeleccionada)
+                                }
+                                jugador.value = jugador.value.copy(NumMonedas = saldo - monedaSeleccionada)
+                            }
+
+
+                            // Actualizar jugador en memoria.
                             jugador.value = jugador.value.copy(NumMonedas = saldo - monedaSeleccionada)
+
+                            // Guardar apuesta en memoria.
                             apuestas.value = apuestas.value + Apuesta(numero, monedaSeleccionada)
                         } else {
                             Toast.makeText(

@@ -16,7 +16,9 @@ class App : Application() {
             this,
             RuletaDatabase::class.java,
             "ruleta_db"
-        ).build()
+        )
+            .fallbackToDestructiveMigration()
+            .build()
     }
 }
 

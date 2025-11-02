@@ -26,7 +26,7 @@ import com.api.ruletaeuropea.data.entity.Ruleta
         Historial::class,
         Ranking::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
