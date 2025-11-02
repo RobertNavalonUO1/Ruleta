@@ -123,20 +123,32 @@ fun PantallaRuletaGirando(
 
             // Actualiza el saldo del jugador
             LaunchedEffect(pagoTotal) {
+                val nuevoSaldo = jugador.NumMonedas + pagoTotal
+
+                // Actualiza la variable de estado
                 onActualizarSaldo(pagoTotal)
 
                 val daoRuleta = App.database.ruletaDao()
                 val daoApuesta = App.database.apuestaDao()
+                val daoJugador = App.database.jugadorDao()
 
+                //Inserta el resultado de la ruleta
                 val idRuleta = withContext(Dispatchers.IO) {
                     daoRuleta.insertar(Ruleta(NumeroGanador = resultado!!))
                 }
 
+                // Inserta las apuestas
                 withContext(Dispatchers.IO) {
                     apuestas.value.forEach {
                         val apuestaCompleta = construirApuestaCompleta(it, jugador, resultado!!, idRuleta)
                         daoApuesta.insertar(apuestaCompleta)
                     }
+                }
+
+                // Actualiza el saldo del jugador en la base de datos
+                withContext(Dispatchers.IO) {
+                    val jugadorActualizado = jugador.copy(NumMonedas = nuevoSaldo)
+                    daoJugador.actualizar(jugadorActualizado)
                 }
             }
 
