@@ -48,8 +48,12 @@ fun AppNavigation(
         }
 
         composable("historial") {
-            PantallaHistorial(jugadorNombre = jugador.value.NombreJugador)
+            PantallaHistorial(
+                jugadorNombre = jugador.value.NombreJugador,
+                navController = navController
+            )
         }
+
 
         composable("ruleta") {
             PantallaRuletaGirando(
