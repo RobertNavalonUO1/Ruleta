@@ -1,5 +1,8 @@
 package com.api.ruletaeuropea.pantallas
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,13 +26,18 @@ import com.api.ruletaeuropea.App
 import com.api.ruletaeuropea.data.entity.Historial
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.scale
 import androidx.navigation.NavController
+
 
 @Composable
 fun PantallaHistorial(jugadorNombre: String, navController: NavController) {
     val dao = App.database.historialDao()
     val historialFlow = dao.verHistorial(jugadorNombre)
     val lista by historialFlow.collectAsState(initial = emptyList())
+
 
     Box(
         modifier = Modifier
@@ -62,7 +70,7 @@ fun PantallaHistorial(jugadorNombre: String, navController: NavController) {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     contentPadding = PaddingValues(16.dp),
-                    modifier = Modifier.fillMaxWidth(0.75f) // deja espacio a la derecha para el botón
+                    modifier = Modifier.fillMaxWidth(0.5f)
                 ) {
                     items(lista) { item: Historial ->
                         Card(
@@ -101,18 +109,18 @@ fun PantallaHistorial(jugadorNombre: String, navController: NavController) {
                 }
             }
         }
-
-        // Botón de salir fijo a la derecha
-        Button(
+        PlantillaBoton(
+            text = "Exit",
             onClick = { navController.navigate("menu") },
-            colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-            shape = RoundedCornerShape(6.dp),
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(top = 80.dp, end = 20.dp)
-        ) {
-            Text("Exit", color = Color.Black)
-        }
+                .padding(end = 20.dp, bottom = 20.dp)
+                .width(120.dp)
+                .height(50.dp),
+            colors = listOf(Color.White, Color(0xFFAAAAAA)),
+            textColor = Color.Black
+        )
+
     }
 }
 

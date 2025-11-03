@@ -122,6 +122,19 @@ fun PantallaApuestas(
                 )
 
                 Spacer(modifier = Modifier.weight(1f))
+                Box(){
+                    PlantillaBoton(
+                        text = "Exit",
+                        onClick = { navController.navigate("menu") },
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(end = 20.dp, bottom = 0.dp)
+                            .width(120.dp)
+                            .height(50.dp),
+                        colors = listOf(Color.White, Color(0xFFAAAAAA)),
+                        textColor = Color.Black
+                    )
+                }
 
                 // Botón circular pequeño: Girar
                 Box(
@@ -150,6 +163,8 @@ fun PantallaApuestas(
                         fontWeight = FontWeight.Bold
                     )
                 }
+
+
             }
         }
     }

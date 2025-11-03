@@ -176,7 +176,7 @@ fun PlantillaBoton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    colors: List<Color> = listOf(Color(0xFFFFD700), Color(0xFFFFB300)),
+    colors: List<Color> = listOf(Color(0xFFFFFFFF), Color(0xFF666666)),
     textColor: Color = Color.Black
 ) {
     val interaction = remember { MutableInteractionSource() }
