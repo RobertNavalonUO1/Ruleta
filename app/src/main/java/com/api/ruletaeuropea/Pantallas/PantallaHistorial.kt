@@ -45,7 +45,7 @@ fun PantallaHistorial(jugadorNombre: String, navController: NavController) {
         ) {
             // Encabezado
             Text(
-                "Historial de $jugadorNombre",
+                "History of $jugadorNombre",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = Color.White,
@@ -54,7 +54,7 @@ fun PantallaHistorial(jugadorNombre: String, navController: NavController) {
 
             if (lista.isEmpty()) {
                 Text(
-                    "No hay registros",
+                    "There are no records",
                     fontSize = 18.sp,
                     color = Color.LightGray
                 )
@@ -80,18 +80,18 @@ fun PantallaHistorial(jugadorNombre: String, navController: NavController) {
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Apuesta #${item.NumApuesta}",
+                                    text = "Bet #${item.NumApuesta}",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 20.sp,
                                     color = Color.White
                                 )
                                 Text(
-                                    text = "Resultado: ${item.Resultado}",
+                                    text = "Result: ${item.Resultado}",
                                     fontSize = 20.sp,
                                     color = Color.White
                                 )
                                 Text(
-                                    text = "Saldo: ${item.SaldoDespues} C",
+                                    text = "Balace: ${item.SaldoDespues} C",
                                     fontSize = 20.sp,
                                     color = Color.White
                                 )

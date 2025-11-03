@@ -63,7 +63,7 @@ fun PantallaMenu(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Hola, ${jugador.value.NombreJugador}",
+                text = "Hello, ${jugador.value.NombreJugador}",
                 color = Color(0xFFFFE97F),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.SemiBold
@@ -92,9 +92,9 @@ fun PantallaMenu(
 
         // 🔹 Botón Salir separado, abajo derecha, debajo de Ajustes
         PlantillaBoton(
-            text = "Salir",
+            text = "Exit",
             onClick = {
-                jugador.value = Jugador(NombreJugador = "Invitado", NumMonedas = 1000)
+                jugador.value = Jugador(NombreJugador = "Guest", NumMonedas = 1000)
                 navController.navigate("login") {
                     popUpTo("menu") { inclusive = true }
                 }
@@ -126,9 +126,9 @@ private fun MenuButtons(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        GoldButton("Jugar", onPlay, buttonModifier)
+        GoldButton("Play", onPlay, buttonModifier)
         GoldButton("Ranking", onRanking, buttonModifier)
-        GoldButton("Historial", onHistory, buttonModifier)
+        GoldButton("History", onHistory, buttonModifier)
         // 🔹 Eliminado GoldButton("Ajustes") y GoldButton("Salir")
     }
 }

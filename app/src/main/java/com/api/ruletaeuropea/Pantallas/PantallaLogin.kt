@@ -82,7 +82,7 @@ fun PantallaLogin(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = "Inicia sesión o crea tu usuario",
+                    text = "Log in or create your account",
                     color = dorado,
                     style = MaterialTheme.typography.headlineMedium
                 )
@@ -90,7 +90,7 @@ fun PantallaLogin(
                 OutlinedTextField(
                     value = nombreState.value,
                     onValueChange = { nombreState.value = it },
-                    label = { Text("Nombre de usuario", color = dorado) },
+                    label = { Text("User name", color = dorado) },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = dorado,
@@ -104,7 +104,7 @@ fun PantallaLogin(
                 OutlinedTextField(
                     value = contrasenaState.value,
                     onValueChange = { contrasenaState.value = it },
-                    label = { Text("Contraseña (opcional)", color = dorado) },
+                    label = { Text("Password (optional)", color = dorado) },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = dorado,
@@ -114,18 +114,6 @@ fun PantallaLogin(
                         cursorColor = dorado
                     )
                 )
-
-                Button(
-                    onClick = {
-                        jugador.value = Jugador(NombreJugador = "Invitado", NumMonedas = 1000)
-                        navController.navigate("menu") {
-                            popUpTo("login") { inclusive = true }
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = dorado)
-                ) {
-                    Text("Entrar sin usuario", color = Color.Black)
-                }
 
                 Button(
                     onClick = {
@@ -156,7 +144,19 @@ fun PantallaLogin(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = dorado)
                 ) {
-                    Text("Guardar y entrar", color = Color.Black)
+                    Text("Save and enter", color = Color.Black)
+                }
+
+                Button(
+                    onClick = {
+                        jugador.value = Jugador(NombreJugador = "Invitado", NumMonedas = 1000)
+                        navController.navigate("menu") {
+                            popUpTo("login") { inclusive = true }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = dorado)
+                ) {
+                    Text("Log in without a username", color = Color.Black)
                 }
             }
         }

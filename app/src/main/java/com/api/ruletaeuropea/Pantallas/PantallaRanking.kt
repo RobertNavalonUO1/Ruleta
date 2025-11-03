@@ -54,7 +54,7 @@ fun PantallaRanking(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Ranking de jugadores",
+                text = "Ranking of players",
                 fontSize = 26.sp,
                 color = Color(0xFFFFE97F),
                 fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
@@ -90,7 +90,7 @@ fun PantallaRanking(navController: NavController) {
 
         //Boton Borrar todos
         PlantillaBoton(
-            text = "Borrar todos",
+            text = "Delete all",
             onClick = {
                 scope.launch {
                     try {

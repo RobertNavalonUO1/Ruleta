@@ -156,10 +156,10 @@ fun RuletaGrid(
             ) {
                 Spacer(modifier = Modifier.width(zeroWidth))
                 OutsideBetBox(label = "1 a 18", codigo = -201, apuestas = apuestas, sectionHeight = sectionHeight, cellSize = cellSize, borderWidth = borderWidth) { onApuestaRealizada(-201) }
-                OutsideBetBox(label = "Par",    codigo = -202, apuestas = apuestas, sectionHeight = sectionHeight, cellSize = cellSize, borderWidth = borderWidth) { onApuestaRealizada(-202) }
+                OutsideBetBox(label = "Pair",    codigo = -202, apuestas = apuestas, sectionHeight = sectionHeight, cellSize = cellSize, borderWidth = borderWidth) { onApuestaRealizada(-202) }
                 OutsideBetBox(imagenRes = R.drawable.diamante_rojo, codigo = -203, apuestas = apuestas, sectionHeight = sectionHeight, cellSize = cellSize, borderWidth = borderWidth) { onApuestaRealizada(-203) }
                 OutsideBetBox(imagenRes = R.drawable.diamante_negro, codigo = -204, apuestas = apuestas, sectionHeight = sectionHeight, cellSize = cellSize, borderWidth = borderWidth) { onApuestaRealizada(-204) }
-                OutsideBetBox(label = "Impar",  codigo = -205, apuestas = apuestas, sectionHeight = sectionHeight, cellSize = cellSize, borderWidth = borderWidth) { onApuestaRealizada(-205) }
+                OutsideBetBox(label = "Odd",  codigo = -205, apuestas = apuestas, sectionHeight = sectionHeight, cellSize = cellSize, borderWidth = borderWidth) { onApuestaRealizada(-205) }
                 OutsideBetBox(label = "19 a 36",codigo = -206, apuestas = apuestas, sectionHeight = sectionHeight, cellSize = cellSize, borderWidth = borderWidth) { onApuestaRealizada(-206) }
             }
         }
@@ -254,7 +254,7 @@ private fun RowScope.OutsideBetBox(
         when {
             imagenRes != null -> Image(
                 painter = painterResource(id = imagenRes),
-                contentDescription = "Apuesta color",
+                contentDescription = "Color bet",
                 modifier = Modifier.size(sectionHeight * 0.98f)
             )
             label != null -> Text(
@@ -313,7 +313,7 @@ private fun BoxScope.CoinsOverlay(apuestas: List<Apuesta>, coinSize: Dp, scale: 
         ) {
             Image(
                 painter = painterResource(id = coinRes(denom)),
-                contentDescription = "Apuesta $denom",
+                contentDescription = "Bet $denom",
                 modifier = Modifier
                     .matchParentSize()
                     .graphicsLayer(scaleX = scale, scaleY = scale)

@@ -97,7 +97,7 @@ fun PantallaApuestas(
                         } else {
                             Toast.makeText(
                                 context,
-                                "No tienes suficientes monedas",
+                                "You don't have enough coins.",
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
@@ -136,7 +136,7 @@ fun PantallaApuestas(
                             } else {
                                 Toast.makeText(
                                     context,
-                                    "Añade alguna apuesta antes de confirmar",
+                                    "Add a bet before confirming",
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
@@ -144,7 +144,7 @@ fun PantallaApuestas(
                     contentAlignment = Alignment.Center
                 ) {
                     androidx.compose.material3.Text(
-                        text = "Girar",
+                        text = "Spin",
                         color = Color.Black,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold
