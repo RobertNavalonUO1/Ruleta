@@ -30,5 +30,9 @@ interface ApuestaDao {
 
     @Query("DELETE FROM Apuesta")
     suspend fun limpiar()
+
+    @Query("SELECT * FROM Apuesta WHERE NumeroApuesta = :idApuesta LIMIT 1")
+    suspend fun obtenerPorId(idApuesta: Long): Apuesta?
+
 }
 
