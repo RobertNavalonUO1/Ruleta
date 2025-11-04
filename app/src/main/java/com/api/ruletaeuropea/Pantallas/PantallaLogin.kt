@@ -32,6 +32,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+
 
 @Composable
 fun PantallaLogin(
@@ -104,6 +117,9 @@ fun PantallaLogin(
                     )
                 )
 
+                var contrasenaVisible by remember { mutableStateOf(false) }
+                var contrasenaState = remember { mutableStateOf("") }
+
                 OutlinedTextField(
                     value = contrasenaState.value,
                     onValueChange = { contrasenaState.value = it },
@@ -115,7 +131,22 @@ fun PantallaLogin(
                         focusedBorderColor = dorado,
                         unfocusedBorderColor = dorado,
                         cursorColor = dorado
-                    )
+                    ),
+                    visualTransformation = if (contrasenaVisible) {
+                        VisualTransformation.None
+                    } else {
+                        PasswordVisualTransformation()
+                    },
+                    trailingIcon = {
+                        val imagen = if (contrasenaVisible)
+                            Icons.Default.Visibility
+                        else
+                            Icons.Default.VisibilityOff
+
+                        IconButton(onClick = { contrasenaVisible = !contrasenaVisible }) {
+                            Icon(imageVector = imagen, contentDescription = "Ver contraseña", tint = dorado)
+                        }
+                    }
                 )
 
                 // Mensaje de error (si lo hay)

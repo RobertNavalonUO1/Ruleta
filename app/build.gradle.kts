@@ -47,6 +47,8 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")
 
+    implementation("androidx.compose.material:material-icons-extended")
+
     implementation("com.airbnb.android:lottie-compose:6.0.0")
 
     val navVersion = "2.8.2"
