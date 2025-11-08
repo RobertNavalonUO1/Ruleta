@@ -14,6 +14,7 @@ import com.api.ruletaeuropea.pantallas.PantallaLogin
 import com.api.ruletaeuropea.pantallas.PantallaMenu
 import com.api.ruletaeuropea.pantallas.PantallaRanking
 import com.api.ruletaeuropea.pantallas.PantallaHistorial
+import com.api.ruletaeuropea.pantallas.PantallaRegister
 
 @Composable
 fun AppNavigation(
@@ -54,7 +55,6 @@ fun AppNavigation(
             )
         }
 
-
         composable("ruleta") {
             PantallaRuletaGirando(
                 navController = navController,
@@ -66,6 +66,10 @@ fun AppNavigation(
                     )
                 }
             )
+        }
+        composable("register") {
+            // Pantalla vacía o de error
+            PantallaRegister(navController = navController, jugador = jugador)
         }
     }
 }
