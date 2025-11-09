@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
@@ -28,10 +29,14 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.navigation.NavController
 import com.api.ruletaeuropea.Modelo.Apuesta
 import com.api.ruletaeuropea.R
 import com.api.ruletaeuropea.componentes.CoinsDisplay
+import com.api.ruletaeuropea.componentes.rememberBallPhysicsState
 import com.api.ruletaeuropea.data.entity.Jugador
 import com.api.ruletaeuropea.logica.calcularPago
 import com.api.ruletaeuropea.logica.evaluarApuesta
@@ -54,7 +59,7 @@ private val PillShape = RoundedCornerShape(28.dp)
 private val RedNumbers: Set<Int> = setOf(1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36)
 
 /**
- * Pantalla de giro de la ruleta con animación y resultado.
+ * Pantalla de giro de la ruleta con animación, física de bola y resultado.
  * Mantiene la firma pública, lógica y flujo de navegación existentes.
  */
 @Composable
@@ -66,15 +71,11 @@ fun PantallaRuletaGirando(
 ) {
     var resultado by rememberSaveable { mutableStateOf<Int?>(null) }
     var mostrarResultado by rememberSaveable { mutableStateOf(false) }
+    var ballThrown by rememberSaveable { mutableStateOf(false) }
+    var showDebug by rememberSaveable { mutableStateOf(true) }
 
-    // Simula el giro de la ruleta y el paso a mostrar resultado
-    LaunchedEffect(Unit) {
-        delay(1500) // tiempo de giro
-        resultado = (0..36).random()
-        delay(2000) // tiempo antes de mostrar resultado
-        mostrarResultado = true
-    }
-
+    // No auto-simular, esperar a que el usuario lance la bola
+    
     // Reemplazado por Box porque no usamos maxWidth/maxHeight aquí
     Box(
         modifier = Modifier
@@ -118,7 +119,15 @@ fun PantallaRuletaGirando(
         Crossfade(targetState = mostrarResultado, animationSpec = tween(durationMillis = 500)) { showResult ->
             if (!showResult) {
                 GirandoSection(
-                    apuestas = apuestas.value
+                    apuestas = apuestas.value,
+                    ballThrown = ballThrown,
+                    showDebug = showDebug,
+                    onThrowBall = { ballThrown = true },
+                    onToggleDebug = { showDebug = !showDebug },
+                    onBallStopped = { section ->
+                        resultado = section
+                        mostrarResultado = true
+                    }
                 )
             } else {
                 // Solo mostramos resultado si ya se generó el número
@@ -137,11 +146,16 @@ fun PantallaRuletaGirando(
 }
 
 /**
- * Sección visible mientras la ruleta está girando: animación + resumen de apuesta.
+ * Sección visible mientras la ruleta está girando: animación + bola con física + resumen de apuesta.
  */
 @Composable
 private fun GirandoSection(
-    apuestas: List<Apuesta>
+    apuestas: List<Apuesta>,
+    ballThrown: Boolean,
+    showDebug: Boolean,
+    onThrowBall: () -> Unit,
+    onToggleDebug: () -> Unit,
+    onBallStopped: (Int) -> Unit
 ) {
     BoxWithConstraints(
         modifier = Modifier
@@ -154,32 +168,196 @@ private fun GirandoSection(
         val panelMinWidth = 280.dp
         val panelWidth = maxOf(panelMinWidth, boxMaxWidth - wheelSize - 32.dp)
 
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Animación de ruleta girando
-            val composition by rememberLottieComposition(LottieCompositionSpec.Asset("ruleta_animada.json"))
-            val progress by animateLottieCompositionAsState(
-                composition = composition,
-                iterations = LottieConstants.IterateForever
-            )
-
-            LottieAnimation(
-                composition = composition,
-                progress = progress,
-                modifier = Modifier
-                    .size(wheelSize)
-                    .semantics { contentDescription = "Ruleta girando" } // TODO(i18n)
-            )
-
-            // Tarjeta de resumen de apuesta
-            BetSummaryCard(
-                apuestas = apuestas,
-                modifier = Modifier.width(panelWidth)
-            )
+        // Calcular el centro de la ruleta en píxeles
+        val density = LocalDensity.current
+        val wheelSizePx = with(density) { wheelSize.toPx() }
+        val wheelCenter = remember(wheelSizePx) {
+            // Posición aproximada del centro de la ruleta en la pantalla
+            Offset(wheelSizePx / 2, wheelSizePx / 2)
         }
+
+        // Estado de física de la bola
+        val ballPhysics = rememberBallPhysicsState(
+            wheelRadius = wheelSize / 2,
+            wheelCenter = wheelCenter,
+            onBallStopped = onBallStopped
+        )
+
+        // Lanzar la bola cuando se marca ballThrown
+        LaunchedEffect(ballThrown) {
+            if (ballThrown && !ballPhysics.isAnimating) {
+                ballPhysics.throwBall()
+            }
+        }
+
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Contenedor de la ruleta con la bola superpuesta
+                Box(
+                    modifier = Modifier.size(wheelSize),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Animación de ruleta girando
+                    val composition by rememberLottieComposition(LottieCompositionSpec.Asset("ruleta_animada.json"))
+                    val progress by animateLottieCompositionAsState(
+                        composition = composition,
+                        iterations = LottieConstants.IterateForever
+                    )
+
+                    LottieAnimation(
+                        composition = composition,
+                        progress = progress,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .semantics { contentDescription = "Ruleta girando" } // TODO(i18n)
+                    )
+
+                    // Dibujar la bola si se ha lanzado
+                    if (ballThrown) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .drawBehind {
+                                    // Dibujar la bola
+                                    drawCircle(
+                                        color = Color.White,
+                                        radius = 12f,
+                                        center = ballPhysics.ballState.position
+                                    )
+                                    drawCircle(
+                                        color = Color.Black,
+                                        radius = 12f,
+                                        center = ballPhysics.ballState.position,
+                                        style = Stroke(width = 2f)
+                                    )
+
+                                    // Dibujar línea desde el centro a la bola (para debug)
+                                    if (showDebug) {
+                                        drawLine(
+                                            color = Color.Green,
+                                            start = wheelCenter,
+                                            end = ballPhysics.ballState.position,
+                                            strokeWidth = 2f
+                                        )
+                                        
+                                        // Dibujar círculo de límite
+                                        drawCircle(
+                                            color = Color.Red.copy(alpha = 0.3f),
+                                            radius = wheelSizePx / 2 * 0.85f,
+                                            center = wheelCenter,
+                                            style = Stroke(width = 2f)
+                                        )
+                                    }
+                                }
+                        )
+                    }
+                }
+
+                // Tarjeta de resumen de apuesta
+                BetSummaryCard(
+                    apuestas = apuestas,
+                    modifier = Modifier.width(panelWidth)
+                )
+            }
+
+            // Controles inferiores
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Botón para lanzar la bola
+                Button(
+                    onClick = onThrowBall,
+                    enabled = !ballThrown,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(56.dp)
+                        .padding(end = 8.dp),
+                    shape = PillShape,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Gold,
+                        contentColor = Color.Black,
+                        disabledContainerColor = Color.Gray,
+                        disabledContentColor = Color.DarkGray
+                    )
+                ) {
+                    Text(
+                        text = if (ballThrown) "Ball thrown" else "Throw Ball",
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                // Botón para toggle debug
+                OutlinedButton(
+                    onClick = onToggleDebug,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(56.dp)
+                        .padding(start = 8.dp),
+                    shape = PillShape,
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = if (showDebug) Gold else Color.White
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (showDebug) Gold else Color.White.copy(alpha = 0.5f)
+                    )
+                ) {
+                    Text(
+                        text = if (showDebug) "Debug ON" else "Debug OFF",
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+
+            // Panel de debug
+            if (showDebug && ballThrown) {
+                Spacer(modifier = Modifier.height(8.dp))
+                DebugPanel(debugInfo = ballPhysics.debugInfo)
+            }
+        }
+    }
+}
+
+/**
+ * Panel de debug que muestra información de la física de la bola
+ */
+@Composable
+private fun DebugPanel(
+    debugInfo: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(CardShape)
+            .background(Color.Black.copy(alpha = 0.7f))
+            .border(width = 1.dp, color = Color.Green.copy(alpha = 0.5f), shape = CardShape)
+            .padding(12.dp)
+    ) {
+        Text(
+            text = "🔍 DEBUG INFO",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Green
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = debugInfo,
+            fontSize = 11.sp,
+            color = Color(0xFF00FF00),
+            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+        )
     }
 }
 
