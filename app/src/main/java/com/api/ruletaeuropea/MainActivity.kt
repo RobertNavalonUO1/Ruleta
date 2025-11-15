@@ -16,18 +16,14 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Determinar si la app es debugeable sin usar BuildConfig
+        // Determinar si la app es debugeable sin usar BuildConfig (se mantiene por compatibilidad pero ya no fuerza la ruta)
         val isDebuggable = (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
 
         // Permitir override mediante extra de intent: --es startRoute ruleta
         val routeFromIntent = intent?.getStringExtra("startRoute")
 
-        // Si se pasa startRoute en el intent, se usa; si no, en modo debugeable arrancamos en "ruleta"
-        val startOverride = when {
-            !routeFromIntent.isNullOrBlank() -> routeFromIntent
-            isDebuggable -> "ruleta"
-            else -> null
-        }
+        // Usar únicamente el valor pasado en el intent si existe; NO forzar "ruleta" en modo debug
+        val startOverride = routeFromIntent?.takeIf { it.isNotBlank() }
 
         setContent {
             MaterialTheme {
