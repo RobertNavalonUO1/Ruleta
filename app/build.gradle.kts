@@ -14,11 +14,15 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
+        // Campos de calibración expuestos para cambiar sin tocar código
+        buildConfigField("Float", "ROULETTE_ASSET_OFFSET_DEG", "4.8649f") // valor inicial, ajustar en futuras builds
+        buildConfigField("Boolean", "ROULETTE_ASSET_CCW", "false")
     }
 
     buildFeatures {
         viewBinding = true
         compose = true
+        buildConfig = true // habilitado explícitamente para permitir buildConfigField
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.14"
@@ -49,6 +53,7 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     // Añadido: foundation para KeyboardOptions (ubicado en foundation.text)
     implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.animation:animation") // añadido para AnimatedVisibility
 
     implementation("com.airbnb.android:lottie-compose:6.0.0")
 
@@ -66,8 +71,7 @@ dependencies {
     // Necesario para Icons.Filled.Visibility / VisibilityOff
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.material:material-icons-extended:1.7.5")
+
+    // Test unitarios
+    testImplementation("junit:junit:4.13.2")
 }
-
-
-
-

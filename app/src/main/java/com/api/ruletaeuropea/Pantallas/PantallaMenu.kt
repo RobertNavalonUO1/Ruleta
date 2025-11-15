@@ -24,7 +24,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
@@ -45,7 +44,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
-// Responsive imports solicitados
 import android.content.res.Configuration
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -93,11 +91,9 @@ fun PantallaMenu(
         val isPortrait = cfg.orientation == Configuration.ORIENTATION_PORTRAIT
 
         BoxWithConstraints(Modifier.fillMaxSize()) {
-            val density = LocalDensity.current
             val maxW = maxWidth
             val maxH = maxHeight
             val isCompactH = maxH < 520.dp
-            val isVeryWide = maxW > 900.dp
 
             // ElevatedCard responsive sin scroll
             ElevatedCard(

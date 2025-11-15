@@ -1,0 +1,130 @@
+PHYSICS IMPLEMENTATION LOG (RoulettePhysicsV2)
+Project: RuletaEuropea (Android, Kotlin, Jetpack Compose)
+Date: 2025-11-08
+
+Scope
+- Replace scripted spin with physically-inspired model where the ball determines the winner.
+- Keep existing UI, navigation, and Room persistence intact.
+- Add calibration parameters and logging for QA.
+
+Key Files Modified/Added
+1) app/src/main/java/com/api/ruletaeuropea/Pantallas/PantallaRuletaGirando.kt
+   - Added RoulettePhysicsV2 composable (public) with a 3-phase simulation.
+   - States: wheelTheta/wheelOmega (mutableState), ballTheta/ballR/ballVr/ballOmega (mutableState).
+   - Deterministic RNG via seed param; micro-noise in torque.
+   - Diamonds (8): inelastic impacts (restitution 0.78 ± 0.03), small radial kick, cooldown 150 ms.
+   - Audio/haptics: tick.wav on diamonds, final_sound.wav + LongPress on landing.
+   - Winner mapping: geometric relation between ball and wheel angles using EURO_ORDER.
+   - Render: Image with aspectRatio(1f)+clip(CircleShape), Canvas ball in polar coordinates, fixed pointer at 12 o’clock.
+   - Debug: debugSlots draws 37 slot lines.
+   - Integration: Replaced previous spinner during spinning; persist result once in ResultadoSection.
+   - Public constants: EURO_ORDER for mapping/tests.
+
+2) app/src/test/java/com/api/ruletaeuropea/RouletteMappingTest.kt
+   - Self-contained verifier (main()) that checks thetaRel→idx→EURO_ORDER mapping for all 37 slot centers and near boundaries.
+   - No external test libs required.
+
+3) docs/README_CALIBRACION_RULETA.md
+   - Calibration guide: assetZeroOffsetDeg and counterClockwiseAsset, debugSlots, logging, measuring slot degrees.
+
+4) app/build.gradle.kts
+   - Add testImplementation("junit:junit:4.13.2") initially; later replaced test with main()-based verifier to avoid dependency concerns. Keeping JUnit is harmless.
+
+Physics Model Overview
+- Phase 0 (outer track):
+  phi ≈ 18°. Critical speed omega_c = sqrt(g / (r * tan(phi))).
+  Torques: τ_r = -c_r ω (c_r≈1.1), τ_a = -c_a |ω| ω (c_a≈0.04); plus small noise.
+  Diamonds: compare rel angle to 8 fixed deflectors (every 45°). Inelastic impact (restitution ~0.78±0.03), reverse+loss on ω, small inward vr kick, cooldown per diamond, tick/haptic.
+  Transition to Phase 1 when |ω| < omega_c.
+- Phase 1 (radial transition):
+  Mass–spring–damper to pocket ring: a_r = -k(r - R_POCKET_RING) - c vr + ω² r; k≈180, c≈12.
+- Phase 2 (capture in pocket):
+  Angular spring+damper to pocket center: α_capture = -k_ang delta - c_ang ω_b (k_ang≈55, c_ang≈8).
+  Landing if |delta| < 0.01 rad and |ω_b| < 2.5 rad/s.
+
+Integration & Performance
+- ~60 fps loop, dt clamp ≤ 25 ms, sub-stepping at 8 ms.
+- Semi-implicit update order (vel then pos) on relevant axes.
+- Remember and mutableState to avoid per-frame allocations; Canvas re-draw driven by state updates.
+
+Winner Calculation (Geometric)
+- slot = 2π/37.
+- thetaRel = normalizeAngle(ballTheta - wheelTheta - offsetRad).
+- idx = (((thetaRel / slot) + 0.5).toInt()).floorMod(37).
+- number = EURO_ORDER[idx].
+
+Calibration & Assets
+- Parameters exposed: assetZeroOffsetDeg (deg), counterClockwiseAsset (bool).
+- 1 slot = 9.7297°, 1/2 slot ≈ 4.8648°.
+- Wheel PNG must be circular and pointer-less; rendering uses clip(CircleShape) + aspectRatio(1f).
+- Debug mode: debugSlots draws slot boundaries.
+- Logs at landing (Logcat tag RuletaMapping): wheelDeg, ballDeg, relativeDeg, idx, numero, assetZeroOffsetDeg, counterClockwiseAsset, seed.
+
+UI/Integration
+- Fixed pointer at 12; wheel rotates based on wheelTheta (sign inverted if counterClockwiseAsset).
+- GirandoSection uses RoulettePhysicsV2 until onLanded(numero) -> resultado = numero; spinFinished = true.
+- ResultadoSection persists with Room once per result.
+
+Audio/Haptics
+- tick.wav (diamonds) and final_sound.wav (landing). Haptic: short on tick (TextHandleMove), LongPress on final.
+
+Determinism
+- Optional seed: pass a Long to RoulettePhysicsV2 to reproduce a spin sequence.
+
+Defaults
+- slotDeg=360/37, phi=18°, c_r=1.1, c_a=0.04, k=180, c=12, k_ang=55, c_ang=8, diamonds=8 (45° apart), window ≈1.7°.
+- Radii: R_TRACK_OUTER=0.82, R_POCKET_RING=0.67, transition ~0.78→0.68.
+
+Known Warnings (non-blocking)
+- Some Compose lint warnings (e.g., Modifier parameter order, deprecated Divider) and unused helper composables (ControlledRouletteWithBall). These do not affect runtime.
+
+How to Run (Windows cmd)
+- Build app:
+  .\gradlew.bat assembleDebug
+- Install/run on device via Android Studio (recommended).
+- Watch Logcat for tag: RuletaMapping.
+
+Optional Mapping Verifier
+- Run main() in RouletteMappingTest.kt from IDE (Run 'RouletteMappingTestKt') to verify mapping logic quickly.
+
+Manual QA Checklist (summary)
+- Wheel looks circular and clean (PNG rounded with clip).
+- Ticks align with diamond hits; energy decays gradually.
+- Smooth fall to pocket ring; final sound aligns with landing.
+- Winning number under pointer matches ≥20 random spins after calibration.
+- assetZeroOffsetDeg fixes asset offset in ±4.8648° / ±9.7297° steps.
+- With counterClockwiseAsset=true and calibration, mapping remains correct.
+- 60 fps on a mid device; no visible jank.
+- Navigation and Room writes remain correct (single persistence per result).
+
+Update (2025-11-08 - Patch A)
+- Angle→number mapping: numberAtAngle now rounds to pocket center using +0.5 and safe floorMod(37).
+- Geometry calibration: radii updated to R_TRACK_OUTER=0.80, R_POCKET_RING=0.69 (TRANSITION_* reserved for future smoothing).
+- Landing robustness: widened window (|delta|<0.02 rad and |omega_b|<3.2) with slow guard (|omega_b|<1.2).
+- Diamond ticks: cooldown increased to 180 ms to avoid bursts.
+- Clean cancellation: physics loop guarded with isActive.
+- Final snap after jitter: ControlledRouletteWheel/WithBall now snaps to exact pocket center.
+- Precision: keep Double in physics; cast to Float only at render.
+- Config-driven calibration: BuildConfig fields added in app/build.gradle.kts
+  • ROULETTE_ASSET_OFFSET_DEG (Float)
+  • ROULETTE_ASSET_CCW (Boolean)
+  These feed GirandoSection → RoulettePhysicsV2.
+- UI polish: HorizontalDivider replaces deprecated Divider in BetSummaryCard; minor cleanup of redundant qualifiers.
+- Docs: added docs/README_CALIBRACION.md with step-by-step calibration and checklist.
+
+How to Calibrate (short)
+1) Set BuildConfig ROULETTE_ASSET_OFFSET_DEG to ±4.8649f (try + first). Optionally toggle ROULETTE_ASSET_CCW.
+2) Run with debugSlots=true once to visually align lines with pocket centers; fine-tune R_POCKET_RING ±0.005 if needed.
+3) Turn debugSlots=false and validate ≥100 spins (varied seeds) visually match reported number.
+
+Acceptance Check (target)
+- Lines overlay cross pocket centers (debugSlots=true).
+- 0 under pointer with calibrated offset (debugSlots=false).
+- ≥100 spins: visual match to reported number.
+- No jank; loop cancels on composition exit; ticks on diamonds; final sound on landing.
+
+Next (optional)
+- Expose a small calibration panel in-app (±½/±1 slot buttons; CCW toggle).
+- Use TRANSITION_* to ease radial path in phase 1.
+
+End of log.

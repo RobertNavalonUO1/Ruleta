@@ -13,3 +13,9 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Gradle build outputs
+/build/
+
+# Kapt stubs (generated)
+app/build/tmp/kapt3/

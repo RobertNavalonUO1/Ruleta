@@ -20,9 +20,14 @@ import com.api.ruletaeuropea.pantallas.PantallaRegister
 fun AppNavigation(
     navController: NavHostController,
     jugador: MutableState<Jugador>,
-    apuestas: MutableState<List<Apuesta>>
+    apuestas: MutableState<List<Apuesta>>,
+    // startDestinationOverride permite a la Activity indicar una ruta distinta (p. ej. "ruleta")
+    startDestinationOverride: String? = null
 ) {
-    NavHost(navController = navController, startDestination = "intro") {
+    // Si la Activity pasa una ruta, úsala; si no, usar "intro"
+    val start = startDestinationOverride ?: "intro"
+
+    NavHost(navController = navController, startDestination = start) {
 
         composable("intro") {
             PantallaIntro(navController)
@@ -60,7 +65,7 @@ fun AppNavigation(
                 navController = navController,
                 jugador = jugador.value,
                 apuestas = apuestas,
-                onActualizarSaldo = { ganancia ->
+                onActualizarSaldo = { ganancia: Int ->
                     jugador.value = jugador.value.copy(
                         NumMonedas = jugador.value.NumMonedas + ganancia
                     )
@@ -73,4 +78,3 @@ fun AppNavigation(
         }
     }
 }
-

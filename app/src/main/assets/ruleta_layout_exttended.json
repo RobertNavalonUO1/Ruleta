@@ -1,0 +1,53 @@
+{
+  "image_size": { "width": 800.0, "height": 800.0 },
+  "center_px": { "cx": 400.0, "cy": 400.0 },
+  "rings_px": {
+    "outer_r": 390.0,
+    "track_outer_r": 360.0,
+    "track_inner_r": 300.0,
+    "cone_outer_r": 250.0,
+    "cone_inner_r": 180.0,
+    "hub_r": 100.0
+  },
+  "angles_reference": {
+    "direction": "clockwise",
+    "rotation_index": 0,
+    "extra_rotation_rad": 0.0
+  },
+  "separators_theta_rad_clockwise": [
+    0.0, 0.261799, 0.523599, 0.785398, 1.047198, 1.308997, 1.570797, 1.832596,
+    2.094395, 2.356194, 2.617994, 2.879793, 3.141593, 3.403392, 3.665191, 3.926991,
+    4.188790, 4.450589, 4.712388, 4.974188, 5.235987, 5.497787, 5.759586, 6.021385
+  ],
+  "upper_pockets": [
+    {
+      "index_clockwise": 0,
+      "number": 0,
+      "color": "green",
+      "id_s1": "p0_s1",
+      "id_s2": "p0_s2",
+      "theta_center_rad": 0.1309,
+      "theta_start_rad": 0.0,
+      "theta_end_rad": 0.2618,
+      "center_x": 400.0,
+      "center_y": 60.0,
+      "polygon": [ [380.0, 40.0], [420.0, 40.0], [425.0, 80.0], [375.0, 80.0] ]
+    },
+    {
+      "index_clockwise": 1,
+      "number": 32,
+      "color": "red",
+      "id_s1": "p1_s1",
+      "id_s2": "p1_s2",
+      "theta_center_rad": 0.3927,
+      "theta_start_rad": 0.2618,
+      "theta_end_rad": 0.5236,
+      "center_x": 470.0,
+      "center_y": 80.0,
+      "polygon": [ [450.0, 60.0], [490.0, 60.0], [495.0, 100.0], [445.0, 100.0] ]
+    }
+  ],
+  "middle_pockets": [],
+  "lower_pockets": []
+}
+
