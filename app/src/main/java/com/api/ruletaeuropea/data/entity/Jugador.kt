@@ -9,6 +9,9 @@ data class Jugador(
     val Email: String? = null,
     val Contrasena: String? = null,
     val NumMonedas: Int = 0,
-    val PosicionRanking: Int? = null
+    val PosicionRanking: Int? = null,
+    // Nivel del jugador (1 por defecto)
+    val Nivel: Int = 1,
+    // Experiencia actual acumulada en el nivel
+    val ExpActual: Int = 0
 )
-

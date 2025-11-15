@@ -66,6 +66,13 @@ fun PantallaMenu(
     val isDark = rememberSaveable { mutableStateOf(false) }
     val showReglas = rememberSaveable { mutableStateOf(false) }
 
+    // Helpers de experiencia (mismas fórmulas que en la ruleta)
+    fun expNecesaria(nivel: Int): Int = 100 + (nivel - 1) * 50
+    val expActual = jugador.value.ExpActual
+    val nivelActual = jugador.value.Nivel
+    val expNivel = expNecesaria(nivelActual)
+    val progresoExp = (expActual.toFloat() / expNivel.toFloat()).coerceIn(0f, 1f)
+
     // Mostrar snackbar solo al cambiar segmentos
     LaunchedEffect(limitesIndex.value, velocidadIndex.value) {
         snackbarHostState.showSnackbar("Preferencia guardada")
@@ -126,8 +133,8 @@ fun PantallaMenu(
 
                             CardSaldo(
                                 saldo = jugador.value.NumMonedas,
-                                nivel = 1,
-                                progreso = 0.35f,
+                                nivel = nivelActual,
+                                progreso = progresoExp,
                                 onRecargar = {
                                     snackbarHostState.currentSnackbarData?.dismiss()
                                     scope.launch { snackbarHostState.showSnackbar("Abre tienda (pendiente)") }
@@ -215,8 +222,8 @@ fun PantallaMenu(
                                 )
                                 CardSaldo(
                                     saldo = jugador.value.NumMonedas,
-                                    nivel = 1,
-                                    progreso = 0.35f,
+                                    nivel = nivelActual,
+                                    progreso = progresoExp,
                                     onRecargar = {
                                         snackbarHostState.currentSnackbarData?.dismiss()
                                         scope.launch { snackbarHostState.showSnackbar("Abre tienda (pendiente)") }
@@ -386,16 +393,32 @@ private fun CardSaldo(saldo: Int, nivel: Int, progreso: Float, onRecargar: () ->
                 Text("Recargar")
             }
         }
-        LinearProgressIndicator(
-            progress = { progresoClamped },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(6.dp)
-                .clip(RoundedCornerShape(4.dp)),
-            color = dorado,
-            trackColor = Color.White.copy(alpha = 0.15f)
-        )
-        Text("Nivel $nivel", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
+        // Barra de EXP con etiqueta
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Nivel $nivel", color = Color.White.copy(alpha = 0.85f), fontSize = 12.sp)
+                Text(
+                    text = "${(progresoClamped * 100).toInt()}% EXP",
+                    color = dorado.copy(alpha = 0.9f),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            Spacer(Modifier.height(4.dp))
+            LinearProgressIndicator(
+                progress = { progresoClamped },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .clip(RoundedCornerShape(4.dp)),
+                color = dorado,
+                trackColor = Color.White.copy(alpha = 0.15f)
+            )
+        }
     }
 }
 

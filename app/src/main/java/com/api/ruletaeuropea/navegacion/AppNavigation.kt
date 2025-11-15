@@ -5,6 +5,8 @@ import androidx.compose.runtime.MutableState
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.api.ruletaeuropea.pantallas.PantallaRuletaGirando
 import com.api.ruletaeuropea.pantallas.PantallaApuestas
 import com.api.ruletaeuropea.pantallas.PantallaIntro
@@ -15,6 +17,7 @@ import com.api.ruletaeuropea.pantallas.PantallaMenu
 import com.api.ruletaeuropea.pantallas.PantallaRanking
 import com.api.ruletaeuropea.pantallas.PantallaHistorial
 import com.api.ruletaeuropea.pantallas.PantallaRegister
+import com.api.ruletaeuropea.pantallas.PantallaResultados
 
 @Composable
 fun AppNavigation(
@@ -69,9 +72,45 @@ fun AppNavigation(
                     jugador.value = jugador.value.copy(
                         NumMonedas = jugador.value.NumMonedas + ganancia
                     )
+                },
+                onActualizarJugador = { actualizado ->
+                    jugador.value = actualizado
                 }
             )
         }
+
+        composable(
+            route = "resultados/{numero}/{apostado}/{premio}/{neto}/{exp}/{nivelAntes}/{nivelDespues}",
+            arguments = listOf(
+                navArgument("numero") { type = NavType.IntType },
+                navArgument("apostado") { type = NavType.IntType },
+                navArgument("premio") { type = NavType.IntType },
+                navArgument("neto") { type = NavType.IntType },
+                navArgument("exp") { type = NavType.IntType },
+                navArgument("nivelAntes") { type = NavType.IntType },
+                navArgument("nivelDespues") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val numero = backStackEntry.arguments?.getInt("numero") ?: 0
+            val apostado = backStackEntry.arguments?.getInt("apostado") ?: 0
+            val premio = backStackEntry.arguments?.getInt("premio") ?: 0
+            val neto = backStackEntry.arguments?.getInt("neto") ?: (premio - apostado)
+            val exp = backStackEntry.arguments?.getInt("exp") ?: 0
+            val nivelAntes = backStackEntry.arguments?.getInt("nivelAntes") ?: jugador.value.Nivel
+            val nivelDespues = backStackEntry.arguments?.getInt("nivelDespues") ?: jugador.value.Nivel
+
+            PantallaResultados(
+                navController = navController,
+                numeroGanador = numero,
+                totalApostado = apostado,
+                premio = premio,
+                neto = neto,
+                expGanada = exp,
+                nivelAntes = nivelAntes,
+                nivelDespues = nivelDespues
+            )
+        }
+
         composable("register") {
             // Pantalla vacía o de error
             PantallaRegister(navController = navController, jugador = jugador)

@@ -1,5 +1,6 @@
 package com.api.ruletaeuropea.pantallas
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -72,7 +73,9 @@ fun PantallaLogin(
                         val nuevo = Jugador(
                             NombreJugador = nombre,
                             Contrasena = contrasenaState.value.takeIf { it.isNotBlank() },
-                            NumMonedas = 1000
+                            NumMonedas = 1000,
+                            Nivel = 1,
+                            ExpActual = 0
                         )
                         withContext(Dispatchers.IO) { dao.insertar(nuevo) }
                         jugador.value = nuevo
@@ -90,7 +93,8 @@ fun PantallaLogin(
                         }
                     }
                 } catch (e: Exception) {
-                    mensajeError.value = "An unexpected error occurred. Please try again."
+                    Log.e("PantallaLogin", "Error en login", e)
+                    mensajeError.value = e.message ?: "An unexpected error occurred. Please try again."
                 } finally {
                     isLoading.value = false
                 }
@@ -231,7 +235,7 @@ fun PantallaLogin(
                     // Botón alternativo delineado para invitado
                     OutlinedButton(
                         onClick = {
-                            jugador.value = Jugador(NombreJugador = "Guest", NumMonedas = 1000)
+                            jugador.value = Jugador(NombreJugador = "Guest", NumMonedas = 1000, Nivel = 1, ExpActual = 0)
                             navController.navigate("menu") {
                                 popUpTo("login") { inclusive = true }
                             }

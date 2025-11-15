@@ -44,6 +44,8 @@ import com.api.ruletaeuropea.Modelo.Apuesta
 import com.api.ruletaeuropea.R
 import com.api.ruletaeuropea.data.entity.Jugador
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 import org.json.JSONObject
 import kotlin.math.PI
 import kotlin.math.atan2
@@ -55,9 +57,11 @@ fun PantallaRuletaGirando(
     navController: NavHostController,
     jugador: Jugador,
     apuestas: MutableState<List<Apuesta>>,
-    onActualizarSaldo: (Int) -> Unit
+    onActualizarSaldo: (Int) -> Unit,
+    onActualizarJugador: (Jugador) -> Unit
 ) {
     val ctx = LocalContext.current
+    val navScope = rememberCoroutineScope()
     var layout by remember { mutableStateOf<RouletteLayoutJson?>(null) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
     var rawJson by remember { mutableStateOf<String?>(null) }
@@ -79,6 +83,11 @@ fun PantallaRuletaGirando(
     var netResult by remember { mutableStateOf(0) }
     var showResultOverlay by remember { mutableStateOf(false) }
 
+    // Experiencia y nivel
+    var expGanada by remember { mutableStateOf(0) }
+    var nivelAntes by remember { mutableStateOf(jugador.Nivel) }
+    var nivelDespues by remember { mutableStateOf(jugador.Nivel) }
+
     LaunchedEffect(Unit) {
         runCatching { ctx.readTextFromRaw(R.raw.ruleta_layout_extended) }
             .onSuccess { txt ->
@@ -88,6 +97,31 @@ fun PantallaRuletaGirando(
                     .onFailure { e -> errorMsg = "No se pudo leer el layout: ${e.message}" }
             }
             .onFailure { e -> errorMsg = "No se pudo abrir el layout: ${e.message}" }
+    }
+
+    // Lanzar automáticamente la ruleta al entrar en la pantalla (viene desde botón Spin)
+    LaunchedEffect(physics, layout) {
+        val engine = physics ?: return@LaunchedEffect
+        if (layout == null) return@LaunchedEffect
+        // Configurar y lanzar una única tirada si aún no está rodando
+        if (!rolling) {
+            setFieldIfExists(engine, "ballMinDegInit", 1200)
+            setFieldIfExists(engine, "ballMaxDegInit", 2200)
+            setFieldIfExists(engine, "rotorMinDegInit", 300)
+            setFieldIfExists(engine, "rotorMaxDegInit", 500)
+            setFieldIfExists(engine, "speedMultiplier", 1.0f)
+            setFieldIfExists(engine, "timeScale", 1.0f)
+            callMethodIfExists(engine, "recomputeDerived")
+            engine.reset()
+            engine.launchBall()
+            rolling = true
+            // reset overlay
+            showResultOverlay = false
+            winnerNumber = null
+            winAmount = 0
+            totalBet = 0
+            netResult = 0
+        }
     }
 
     // Bucle físico básico
@@ -113,20 +147,72 @@ fun PantallaRuletaGirando(
                 winAmount = win
                 totalBet = apostado
                 netResult = win - apostado
+
+                // ---- Lógica de experiencia y nivel ----
+                val expBase = 50
+                val expPorMoneda = 1
+                val expRonda = expBase + (apostado * expPorMoneda)
+                expGanada = expRonda
+
+                var nuevoNivel = jugador.Nivel
+                var nuevaExp = jugador.ExpActual + expRonda
+                var monedasBonus = 0
+
+                fun expNecesaria(nivel: Int): Int = 100 + (nivel - 1) * 50
+                fun bonusMonedasPorNivel(nivel: Int): Int = 500 + (nivel - 1) * 200
+
+                // Subir de nivel mientras supere el umbral
+                while (nuevaExp >= expNecesaria(nuevoNivel)) {
+                    nuevaExp -= expNecesaria(nuevoNivel)
+                    nuevoNivel += 1
+                    monedasBonus += bonusMonedasPorNivel(nuevoNivel)
+                }
+
+                nivelAntes = jugador.Nivel
+                nivelDespues = nuevoNivel
+
+                // Aplicar bonus de nivel al saldo
+                if (monedasBonus > 0) {
+                    onActualizarSaldo(monedasBonus)
+                }
+
+                // Aplicar ganancias/pérdidas de la tirada al saldo
+                if (win > 0) onActualizarSaldo(win)
+
+                // Actualizar el Jugador completo (nivel y exp) hacia fuera
+                val jugadorActualizado = jugador.copy(
+                    Nivel = nuevoNivel,
+                    ExpActual = nuevaExp
+                )
+                onActualizarJugador(jugadorActualizado)
+
                 showResultOverlay = true
                 // actualizar historial (máx 15)
                 lastResults.add(0, numero)
                 if (lastResults.size > 15) lastResults.removeAt(lastResults.size - 1)
                 // aplicar ganancias al finalizar con el resultado visual
                 if (win > 0) onActualizarSaldo(win)
+
+                // tras un pequeño delay para disfrutar del overlay, navegar a la pantalla de resultados
+                // y limpiar las apuestas actuales
+                navScope.launch {
+                    delay(1500)
+                    val net = win - apostado
+                    val route = "resultados/$numero/$apostado/$win/$net/$expRonda/$nivelAntes/$nivelDespues"
+                    // opcional: limpiar apuestas para la siguiente ronda
+                    apuestas.value = emptyList()
+                    navController.navigate(route) {
+                        popUpTo("apuestas") { inclusive = false }
+                    }
+                }
             }
         }
     }
 
-    // Ocultar overlay tras unos segundos
+    // Ocultar overlay si hubiera quedado visible demasiado tiempo (seguro adicional)
     LaunchedEffect(showResultOverlay) {
         if (showResultOverlay) {
-            delay(3500)
+            delay(4000)
             showResultOverlay = false
         }
     }
@@ -169,27 +255,6 @@ fun PantallaRuletaGirando(
                 ),
                 actions = { Text("💰 ${jugador.NumMonedas}", modifier = Modifier.padding(end = 12.dp), color = Color(0xFFF1F1F1)) }
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    physics?.let {
-                        setFieldIfExists(it, "ballMinDegInit", wMinDeg.toInt())
-                        setFieldIfExists(it, "ballMaxDegInit", wMaxDeg.toInt())
-                        setFieldIfExists(it, "rotorMinDegInit", rotorMinDeg.toInt())
-                        setFieldIfExists(it, "rotorMaxDegInit", rotorMaxDeg.toInt())
-                        setFieldIfExists(it, "speedMultiplier", speedMul)
-                        setFieldIfExists(it, "timeScale", speedMul)
-                        runCatching { it.cfg = it.cfg.copy(baseAngularFriction = baseAngularFriction, airRes = airRes) }
-                        callMethodIfExists(it, "recomputeDerived")
-                        it.reset(); it.launchBall(); rolling = true
-                        // reset overlay
-                        showResultOverlay = false; winnerNumber = null; winAmount = 0; totalBet = 0; netResult = 0
-                    }
-                },
-                containerColor = if (rolling) Color(0xFF303030) else amber,
-                contentColor = if (rolling) Color(0xFFBDBDBD) else Color.Black
-            ) { Text(if (rolling) "Girando…" else "Lanzar bola") }
         }
     ) { pad ->
         Box(modifier = Modifier.fillMaxSize().padding(pad)) {

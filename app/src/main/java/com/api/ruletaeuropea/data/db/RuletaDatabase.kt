@@ -26,7 +26,7 @@ import com.api.ruletaeuropea.data.entity.Ruleta
         Historial::class,
         Ranking::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -38,4 +38,3 @@ abstract class RuletaDatabase : RoomDatabase() {
     abstract fun historialDao(): HistorialDao
     abstract fun rankingDao(): RankingDao
 }
-
