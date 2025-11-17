@@ -1,16 +1,8 @@
 package com.api.ruletaeuropea.pantallas
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -18,37 +10,26 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.api.ruletaeuropea.data.entity.Jugador
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.runtime.LaunchedEffect
 import com.api.ruletaeuropea.R
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import android.content.res.Configuration
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun PantallaMenu(
@@ -61,9 +42,7 @@ fun PantallaMenu(
     val scope = rememberCoroutineScope()
 
     // Estados persistentes
-    val limitesIndex = rememberSaveable { mutableStateOf(1) } // Estándar por defecto
-    val velocidadIndex = rememberSaveable { mutableStateOf(1) } // Normal por defecto
-    val isDark = rememberSaveable { mutableStateOf(false) }
+    // Eliminado limitesIndex y velocidadIndex (selección Bajo/Estándar/Alto y lenta/normal/rápida)
     val showReglas = rememberSaveable { mutableStateOf(false) }
 
     // Helpers de experiencia (mismas fórmulas que en la ruleta)
@@ -73,10 +52,7 @@ fun PantallaMenu(
     val expNivel = expNecesaria(nivelActual)
     val progresoExp = (expActual.toFloat() / expNivel.toFloat()).coerceIn(0f, 1f)
 
-    // Mostrar snackbar solo al cambiar segmentos
-    LaunchedEffect(limitesIndex.value, velocidadIndex.value) {
-        snackbarHostState.showSnackbar("Preferencia guardada")
-    }
+    // Eliminado LaunchedEffect que mostraba snackbar al cambiar preferencias de límites/velocidad
 
     Box(
         modifier = Modifier
@@ -98,7 +74,6 @@ fun PantallaMenu(
         val isPortrait = cfg.orientation == Configuration.ORIENTATION_PORTRAIT
 
         BoxWithConstraints(Modifier.fillMaxSize()) {
-            val maxW = maxWidth
             val maxH = maxHeight
             val isCompactH = maxH < 520.dp
 
@@ -141,38 +116,7 @@ fun PantallaMenu(
                                 }
                             )
 
-                            PillsSection()
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                TextButton(onClick = { showReglas.value = true }) { Text("Reglas", color = dorado) }
-                                ToggleTema(isDark = isDark.value) { isDark.value = !isDark.value }
-                            }
-
-                            Segment(
-                                items = listOf("Bajo", "Estándar", "Alto"),
-                                selected = limitesIndex.value,
-                                onSelect = { idx ->
-                                    limitesIndex.value = idx
-                                    haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                dense = true
-                            )
-                            Segment(
-                                items = listOf("Lenta", "Normal", "Rápida"),
-                                selected = velocidadIndex.value,
-                                onSelect = { idx ->
-                                    velocidadIndex.value = idx
-                                    haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                dense = true
-                            )
-
+                            // Accesos rápidos y últimos resultados
                             AccesosRapidos(
                                 onPrivada = {
                                     snackbarHostState.currentSnackbarData?.dismiss()
@@ -188,7 +132,6 @@ fun PantallaMenu(
                                 }
                             )
 
-                            UltimosResultados(nums = listOf(14, 0, 29, 3, 21, 7, 17, 32, 1, 9))
 
                             MenuButtons(
                                 onPlay = {
@@ -229,41 +172,12 @@ fun PantallaMenu(
                                         scope.launch { snackbarHostState.showSnackbar("Abre tienda (pendiente)") }
                                     }
                                 )
-                                PillsSection()
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    TextButton(onClick = { showReglas.value = true }) { Text("Reglas", color = dorado) }
-                                    ToggleTema(isDark = isDark.value) { isDark.value = !isDark.value }
-                                }
                             }
                             Column(
                                 modifier = Modifier.weight(1f),
                                 verticalArrangement = Arrangement.spacedBy(12.dp),
                                 horizontalAlignment = Alignment.Start
                             ) {
-                                Segment(
-                                    items = listOf("Bajo", "Estándar", "Alto"),
-                                    selected = limitesIndex.value,
-                                    onSelect = { idx ->
-                                        limitesIndex.value = idx
-                                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    dense = true
-                                )
-                                Segment(
-                                    items = listOf("Lenta", "Normal", "Rápida"),
-                                    selected = velocidadIndex.value,
-                                    onSelect = { idx ->
-                                        velocidadIndex.value = idx
-                                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    dense = true
-                                )
                                 AccesosRapidos(
                                     onPrivada = {
                                         snackbarHostState.currentSnackbarData?.dismiss()
@@ -423,73 +337,6 @@ private fun CardSaldo(saldo: Int, nivel: Int, progreso: Float, onRecargar: () ->
 }
 
 @Composable
-private fun Pill(text: String) {
-    val dorado = Color(0xFFFFD700)
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(Color.Black.copy(alpha = 0.45f))
-            .border(1.dp, dorado.copy(alpha = 0.4f), RoundedCornerShape(50))
-            .padding(horizontal = 14.dp, vertical = 6.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun PillsSection() {
-    FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Pill("RTP 97.30%")
-        Pill("0 único (europea)")
-        Pill("La Partage opcional")
-    }
-}
-
-@Composable
-private fun Segment(
-    items: List<String>,
-    selected: Int,
-    onSelect: (Int) -> Unit,
-    modifier: Modifier = Modifier,
-    dense: Boolean = false
-) {
-    val shape = RoundedCornerShape(12.dp)
-    val pad = if (dense) 6.dp else 8.dp
-    val txtSize = 12.sp
-    Surface(
-        modifier = modifier,
-        shape = shape,
-        color = Color.White.copy(alpha = 0.08f),
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f))
-    ) {
-        Row(Modifier.padding(pad)) {
-            items.forEachIndexed { i, label ->
-                val on = i == selected
-                val bg = if (on) Color(0xFF0F141B) else Color.Transparent
-                val txt = if (on) Color.White else Color(0xFF9FB0C2)
-                Text(
-                    text = label,
-                    color = txt,
-                    fontSize = txtSize,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
-                        .clickable { onSelect(i) }
-                        .background(bg)
-                        .padding(horizontal = 12.dp, vertical = pad)
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun AccesosRapidos(
     onPrivada: () -> Unit,
     onPractica: () -> Unit,
@@ -544,23 +391,14 @@ private fun DialogReglas(show: Boolean, onDismiss: () -> Unit) {
         title = { Text("Reglas de la Ruleta Europea", color = dorado, fontWeight = FontWeight.SemiBold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("37 casillas (0–36). 0 en verde; resto alterna rojo/negro.")
+                // Quitado detalle de "0 en verde" y la línea de La Partage / En Prison
+                Text("37 casillas (0–36).")
                 Text("Pagos:")
                 Text("• Pleno 35:1\n• Caballo 17:1\n• Calle 11:1\n• Esquina 8:1\n• Línea 5:1\n• Docena/Columna 2:1\n• Par/Impar, Rojo/Negro, Falta/Pasa 1:1")
-                Text("Reglas opcionales: La Partage / En Prison para apuestas 1:1 cuando sale 0.")
             }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) { Text("Cerrar", color = dorado) }
         }
     )
-}
-
-@Composable
-private fun ToggleTema(isDark: Boolean, onToggle: () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text("Tema oscuro", color = Color.White.copy(alpha = 0.9f))
-        Spacer(Modifier.width(8.dp))
-        Switch(checked = isDark, onCheckedChange = { onToggle() })
-    }
 }

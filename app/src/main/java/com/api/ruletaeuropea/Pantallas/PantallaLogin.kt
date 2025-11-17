@@ -38,6 +38,15 @@ import androidx.compose.ui.Modifier
 
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 
 @Composable
 fun PantallaLogin(
@@ -50,10 +59,21 @@ fun PantallaLogin(
     val passwordVisible = rememberSaveable { mutableStateOf(false) }
     val isLoading = remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-
     val dorado = Color(0xFFFFD700)
     val fondo = painterResource(id = R.drawable.fondo)
     val logo = painterResource(id = R.drawable.logoinico)
+
+    val cfg = LocalConfiguration.current
+    val widthDp = cfg.screenWidthDp
+    val heightDp = cfg.screenHeightDp
+    val isLandscape = widthDp > heightDp
+    val sizeClass = when {
+        widthDp >= 840 -> "expanded"
+        widthDp >= 600 -> "medium"
+        else -> "compact"
+    }
+    val isLowHeight = heightDp < 520
+    val scrollState = rememberScrollState()
 
     // Acción de login reutilizable (botón y tecla Done)
     val onLogin: () -> Unit = {
@@ -107,146 +127,246 @@ fun PantallaLogin(
             .fillMaxSize()
             .background(Color.Black)
     ) {
+        // Fondo base
         Image(
             painter = fondo,
             contentDescription = "Fondo decorativo",
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
+        // Overlay sutil para legibilidad
+        Box(
+            Modifier
+                .matchParentSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color(0xCC000000), Color(0x99000000), Color(0x66000000))
+                    )
+                )
+        )
 
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(32.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Lado izquierdo: Logo
-            Image(
-                painter = logo,
-                contentDescription = "Logo de inicio",
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .padding(end = 24.dp),
-                contentScale = ContentScale.Fit
-            )
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            val maxW = maxWidth
+            val cardMaxWidth = when (sizeClass) {
+                "expanded" -> 600.dp
+                "medium" -> 500.dp
+                else -> 420.dp
+            }
 
-            // Formulario dentro de una tarjeta elevada con fondo translúcido
-            ElevatedCard(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(16.dp),
-                shape = MaterialTheme.shapes.extraLarge,
-                colors = CardDefaults.elevatedCardColors(containerColor = Color(0xCC000000)),
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 8.dp)
-            ) {
+            val horizontalPadding = when (sizeClass) {
+                "expanded" -> 48.dp
+                "medium" -> 40.dp
+                else -> 24.dp
+            }
+            val verticalPadding = if (isLowHeight) 8.dp else 24.dp
+            val formSpacing = if (isLowHeight) 12.dp else 16.dp
+            val headlineStyle = if (sizeClass == "compact") MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium
+
+            // Layout adaptativo
+            if (isLandscape && sizeClass != "compact") {
+                // Fila: logo + formulario
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = horizontalPadding, vertical = verticalPadding),
+                    horizontalArrangement = Arrangement.spacedBy(32.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Logo escalado y centrado
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = logo,
+                            contentDescription = "Logo",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(CircleShape)
+                                .padding(12.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
+                    // Formulario en card
+                    LoginCard(
+                        nombreState = nombreState,
+                        contrasenaState = contrasenaState,
+                        mensajeError = mensajeError,
+                        passwordVisible = passwordVisible,
+                        isLoading = isLoading,
+                        onLogin = onLogin,
+                        navController = navController,
+                        jugador = jugador,
+                        dorado = dorado,
+                        modifier = Modifier
+                            .weight(1f)
+                            .widthIn(max = cardMaxWidth)
+                            .verticalScroll(scrollState),
+                        spacing = formSpacing,
+                        headlineStyle = headlineStyle
+                    )
+                }
+            } else {
+                // Columna apilada (portrait o pantalla compacta)
                 Column(
                     modifier = Modifier
-                        .padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                        .fillMaxSize()
+                        .padding(horizontal = horizontalPadding, vertical = verticalPadding)
+                        .verticalScroll(scrollState),
+                    verticalArrangement = Arrangement.spacedBy(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "Log in or create your account",
-                        color = dorado,
-                        style = MaterialTheme.typography.headlineMedium
+                    Image(
+                        painter = logo,
+                        contentDescription = "Logo",
+                        modifier = Modifier
+                            .widthIn(max = 260.dp)
+                            .fillMaxWidth(0.6f)
+                            .padding(top = if (isLowHeight) 8.dp else 24.dp),
+                        contentScale = ContentScale.Fit
                     )
-
-                    OutlinedTextField(
-                        value = nombreState.value,
-                        onValueChange = {
-                            nombreState.value = it
-                            if (!mensajeError.value.isNullOrEmpty()) mensajeError.value = null
-                        },
-                        label = { Text("User name", color = dorado) },
-                        placeholder = { Text("Enter your user name", color = dorado.copy(alpha = 0.7f)) },
-                        singleLine = true,
-                        leadingIcon = { Icon(imageVector = Icons.Filled.Person, contentDescription = null, tint = dorado) },
-                        isError = mensajeError.value != null,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next, keyboardType = KeyboardType.Text),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = dorado,
-                            unfocusedTextColor = dorado,
-                            focusedBorderColor = dorado,
-                            unfocusedBorderColor = dorado,
-                            cursorColor = dorado
-                        )
+                    LoginCard(
+                        nombreState = nombreState,
+                        contrasenaState = contrasenaState,
+                        mensajeError = mensajeError,
+                        passwordVisible = passwordVisible,
+                        isLoading = isLoading,
+                        onLogin = onLogin,
+                        navController = navController,
+                        jugador = jugador,
+                        dorado = dorado,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .widthIn(max = cardMaxWidth),
+                        spacing = formSpacing,
+                        headlineStyle = headlineStyle
                     )
-
-                    OutlinedTextField(
-                        value = contrasenaState.value,
-                        onValueChange = {
-                            contrasenaState.value = it
-                            if (!mensajeError.value.isNullOrEmpty()) mensajeError.value = null
-                        },
-                        label = { Text("Password", color = dorado) },
-                        placeholder = { Text("Enter your password", color = dorado.copy(alpha = 0.7f)) },
-                        singleLine = true,
-                        leadingIcon = { Icon(imageVector = Icons.Filled.Lock, contentDescription = null, tint = dorado) },
-                        trailingIcon = {
-                            IconButton(onClick = { passwordVisible.value = !passwordVisible.value }) {
-                                val icon = if (passwordVisible.value) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
-                                val desc = if (passwordVisible.value) "Hide password" else "Show password"
-                                Icon(imageVector = icon, contentDescription = desc, tint = dorado)
-                            }
-                        },
-                        visualTransformation = if (passwordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
-                        isError = mensajeError.value != null,
-                        supportingText = {
-                            mensajeError.value?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                        },
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = KeyboardType.Password),
-                        keyboardActions = KeyboardActions(onDone = { onLogin() }),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = dorado,
-                            unfocusedTextColor = dorado,
-                            focusedBorderColor = dorado,
-                            unfocusedBorderColor = dorado,
-                            cursorColor = dorado
-                        )
-                    )
-
-                    // Botón principal con estado de carga
-                    Button(
-                        onClick = onLogin,
-                        enabled = !isLoading.value,
-                        colors = ButtonDefaults.buttonColors(containerColor = dorado)
-                    ) {
-                        if (isLoading.value) {
-                            CircularProgressIndicator(
-                                color = Color.Black,
-                                strokeWidth = 2.dp,
-                                modifier = Modifier
-                                    .height(18.dp)
-                                    .width(18.dp)
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text("Signing in...", color = Color.Black)
-                        } else {
-                            Text("Save and enter", color = Color.Black)
-                        }
-                    }
-
-                    // Enlace para crear cuenta con menor jerarquía visual
-                    TextButton(onClick = { navController.navigate("register") }) {
-                        Text("Create account", color = dorado)
-                    }
-
-                    // Botón alternativo delineado para invitado
-                    OutlinedButton(
-                        onClick = {
-                            jugador.value = Jugador(NombreJugador = "Guest", NumMonedas = 1000, Nivel = 1, ExpActual = 0)
-                            navController.navigate("menu") {
-                                popUpTo("login") { inclusive = true }
-                            }
-                        },
-                        enabled = !isLoading.value,
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = dorado),
-                        border = BorderStroke(1.dp, dorado)
-                    ) {
-                        Text("Log as guest")
-                    }
                 }
+            }
+        }
+    }
+}
+
+// Nuevo composable para la tarjeta de login reutilizable y responsive
+@Composable
+private fun LoginCard(
+    nombreState: MutableState<String>,
+    contrasenaState: MutableState<String>,
+    mensajeError: MutableState<String?>,
+    passwordVisible: MutableState<Boolean>,
+    isLoading: MutableState<Boolean>,
+    onLogin: () -> Unit,
+    navController: NavController,
+    jugador: MutableState<Jugador>,
+    dorado: Color,
+    modifier: Modifier = Modifier,
+    spacing: Dp = 16.dp,
+    headlineStyle: androidx.compose.ui.text.TextStyle
+) {
+    ElevatedCard(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.elevatedCardColors(containerColor = Color(0xCC000000)),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 10.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 24.dp, vertical = spacing),
+            verticalArrangement = Arrangement.spacedBy(spacing)
+        ) {
+            Text(
+                text = "Log in or create your account",
+                color = dorado,
+                style = headlineStyle,
+                fontWeight = FontWeight.SemiBold
+            )
+            OutlinedTextField(
+                value = nombreState.value,
+                onValueChange = {
+                    nombreState.value = it
+                    if (!mensajeError.value.isNullOrEmpty()) mensajeError.value = null
+                },
+                label = { Text("User name", color = dorado) },
+                placeholder = { Text("Enter your user name", color = dorado.copy(alpha = 0.7f)) },
+                singleLine = true,
+                leadingIcon = { Icon(imageVector = Icons.Filled.Person, contentDescription = null, tint = dorado) },
+                isError = mensajeError.value != null,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next, keyboardType = KeyboardType.Text),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = dorado,
+                    unfocusedTextColor = dorado,
+                    focusedBorderColor = dorado,
+                    unfocusedBorderColor = dorado,
+                    cursorColor = dorado
+                )
+            )
+
+            OutlinedTextField(
+                value = contrasenaState.value,
+                onValueChange = {
+                    contrasenaState.value = it
+                    if (!mensajeError.value.isNullOrEmpty()) mensajeError.value = null
+                },
+                label = { Text("Password", color = dorado) },
+                placeholder = { Text("Enter your password", color = dorado.copy(alpha = 0.7f)) },
+                singleLine = true,
+                leadingIcon = { Icon(imageVector = Icons.Filled.Lock, contentDescription = null, tint = dorado) },
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible.value = !passwordVisible.value }) {
+                        val icon = if (passwordVisible.value) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
+                        val desc = if (passwordVisible.value) "Hide password" else "Show password"
+                        Icon(imageVector = icon, contentDescription = desc, tint = dorado)
+                    }
+                },
+                visualTransformation = if (passwordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
+                isError = mensajeError.value != null,
+                supportingText = { mensajeError.value?.let { Text(it, color = MaterialTheme.colorScheme.error) } },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = KeyboardType.Password),
+                keyboardActions = KeyboardActions(onDone = { onLogin() }),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = dorado,
+                    unfocusedTextColor = dorado,
+                    focusedBorderColor = dorado,
+                    unfocusedBorderColor = dorado,
+                    cursorColor = dorado
+                )
+            )
+
+            Button(
+                onClick = onLogin,
+                enabled = !isLoading.value,
+                colors = ButtonDefaults.buttonColors(containerColor = dorado),
+                modifier = Modifier.height(52.dp)
+            ) {
+                if (isLoading.value) {
+                    CircularProgressIndicator(
+                        color = Color.Black,
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Text("Signing in...", color = Color.Black)
+                } else Text("Save and enter", color = Color.Black, fontWeight = FontWeight.Bold)
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = { navController.navigate("register") }) { Text("Create account", color = dorado) }
+                OutlinedButton(
+                    onClick = {
+                        jugador.value = Jugador(NombreJugador = "Guest", NumMonedas = 1000, Nivel = 1, ExpActual = 0)
+                        navController.navigate("menu") {
+                            popUpTo("login") { inclusive = true }
+                        }
+                    },
+                    enabled = !isLoading.value,
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = dorado),
+                    border = BorderStroke(1.dp, dorado)
+                ) { Text("Log as guest") }
             }
         }
     }
