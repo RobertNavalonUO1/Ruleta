@@ -1,5 +1,6 @@
 package com.api.ruletaeuropea.pantallas
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,7 +31,14 @@ import android.content.res.Configuration
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import com.google.accompanist.flowlayout.FlowRow
 
+
+
+
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun PantallaMenu(
     navController: NavController,
@@ -83,21 +91,83 @@ fun PantallaMenu(
                     .align(Alignment.Center)
                     .padding(horizontal = if (isPortrait) 20.dp else 28.dp)
                     .fillMaxWidth(if (isPortrait) 0.96f else 0.90f)
-                    .wrapContentHeight(),
+                    .heightIn(min = 0.dp, max = maxHeight * 0.95f)
+                    .verticalScroll(rememberScrollState()),
                 shape = MaterialTheme.shapes.extraLarge,
                 colors = CardDefaults.elevatedCardColors(containerColor = Color(0xCC000000)),
                 elevation = CardDefaults.elevatedCardElevation(defaultElevation = 8.dp)
             ) {
                 val innerPad = if (isPortrait && !isCompactH) 20.dp else 16.dp
 
-                Box { // Para anclar snackbar host
-                    if (isPortrait && !isCompactH) {
-                        // Una columna (portrait alto suficiente)
+
+                if (isPortrait && !isCompactH) {
+                    //Modo vertical
+                    Column(
+                        modifier = Modifier
+                            .padding(all = innerPad),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Hola, ${jugador.value.NombreJugador}",
+                            color = dorado,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+
+                        CardSaldo(
+                            saldo = jugador.value.NumMonedas,
+                            nivel = nivelActual,
+                            progreso = progresoExp,
+                            onRecargar = {
+                                snackbarHostState.currentSnackbarData?.dismiss()
+                                scope.launch { snackbarHostState.showSnackbar("Abre tienda (pendiente)") }
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(5.dp))
+
+                        // Accesos rápidos y últimos resultados
+                        AccesosRapidos(
+                            onPrivada = {
+                                snackbarHostState.currentSnackbarData?.dismiss()
+                                scope.launch { snackbarHostState.showSnackbar("Creando mesa privada…") }
+                            },
+                            onPractica = {
+                                snackbarHostState.currentSnackbarData?.dismiss()
+                                scope.launch { snackbarHostState.showSnackbar("Entrando en modo práctica…") }
+                            },
+                            onMulti = {
+                                snackbarHostState.currentSnackbarData?.dismiss()
+                                scope.launch { snackbarHostState.showSnackbar("Buscando partidas multijugador…") }
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(5.dp))
+
+                        MenuButtons(
+                            onPlay = {
+                                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                navController.navigate("apuestas")
+                            },
+                            onRanking = { navController.navigate("ranking") },
+                            onHistory = { navController.navigate("historial") },
+                            dense = false
+                        )
+                    }
+
+                    } else {
+                    //Modo horizontal o compacto
+                    Row(
+                        modifier = Modifier
+                            .padding(vertical = 20.dp, horizontal = 20.dp)
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        //Columna Izquierda
                         Column(
-                            modifier = Modifier
-                                .padding(all = innerPad),
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            horizontalAlignment = Alignment.Start
                         ) {
                             Text(
                                 text = "Hola, ${jugador.value.NombreJugador}",
@@ -105,7 +175,6 @@ fun PantallaMenu(
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
-
                             CardSaldo(
                                 saldo = jugador.value.NumMonedas,
                                 nivel = nivelActual,
@@ -115,8 +184,6 @@ fun PantallaMenu(
                                     scope.launch { snackbarHostState.showSnackbar("Abre tienda (pendiente)") }
                                 }
                             )
-
-                            // Accesos rápidos y últimos resultados
                             AccesosRapidos(
                                 onPrivada = {
                                     snackbarHostState.currentSnackbarData?.dismiss()
@@ -131,8 +198,17 @@ fun PantallaMenu(
                                     scope.launch { snackbarHostState.showSnackbar("Buscando partidas multijugador…") }
                                 }
                             )
+                            UltimosResultados(nums = listOf(14, 0, 29, 3, 21, 7, 17, 32, 1, 9))
 
-
+                        }
+                        //Columna Derecha:
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.Start
+                        ) {
                             MenuButtons(
                                 onPlay = {
                                     haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -140,79 +216,18 @@ fun PantallaMenu(
                                 },
                                 onRanking = { navController.navigate("ranking") },
                                 onHistory = { navController.navigate("historial") },
-                                dense = false
+                                dense = true
                             )
                         }
-                    } else {
-                        // Dos columnas (landscape o altura compacta)
-                        Row(
-                            modifier = Modifier
-                                .padding(vertical = 20.dp, horizontal = 20.dp)
-                                .fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            verticalAlignment = Alignment.Top
-                        ) {
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
-                                horizontalAlignment = Alignment.Start
-                            ) {
-                                Text(
-                                    text = "Hola, ${jugador.value.NombreJugador}",
-                                    color = dorado,
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                CardSaldo(
-                                    saldo = jugador.value.NumMonedas,
-                                    nivel = nivelActual,
-                                    progreso = progresoExp,
-                                    onRecargar = {
-                                        snackbarHostState.currentSnackbarData?.dismiss()
-                                        scope.launch { snackbarHostState.showSnackbar("Abre tienda (pendiente)") }
-                                    }
-                                )
-                            }
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
-                                horizontalAlignment = Alignment.Start
-                            ) {
-                                AccesosRapidos(
-                                    onPrivada = {
-                                        snackbarHostState.currentSnackbarData?.dismiss()
-                                        scope.launch { snackbarHostState.showSnackbar("Creando mesa privada…") }
-                                    },
-                                    onPractica = {
-                                        snackbarHostState.currentSnackbarData?.dismiss()
-                                        scope.launch { snackbarHostState.showSnackbar("Entrando en modo práctica…") }
-                                    },
-                                    onMulti = {
-                                        snackbarHostState.currentSnackbarData?.dismiss()
-                                        scope.launch { snackbarHostState.showSnackbar("Buscando partidas multijugador…") }
-                                    }
-                                )
-                                UltimosResultados(nums = listOf(14, 0, 29, 3, 21, 7, 17, 32, 1, 9))
-                                MenuButtons(
-                                    onPlay = {
-                                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        navController.navigate("apuestas")
-                                    },
-                                    onRanking = { navController.navigate("ranking") },
-                                    onHistory = { navController.navigate("historial") },
-                                    dense = true
-                                )
-                            }
-                        }
                     }
-
-                    SnackbarHost(
-                        hostState = snackbarHostState,
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = 8.dp)
-                    )
                 }
+
+                SnackbarHost(
+                    hostState = snackbarHostState,
+                    modifier = Modifier
+                        //.align(Alignment.BottomCenter)
+                        .padding(bottom = 8.dp)
+                )
             }
         }
 
@@ -342,14 +357,14 @@ private fun AccesosRapidos(
     onPractica: () -> Unit,
     onMulti: () -> Unit
 ) {
-    Row(
+    FlowRow(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+        mainAxisSpacing = 8.dp,
+        crossAxisSpacing = 8.dp
     ) {
         OutlinedButton(onClick = onPrivada) { Text("Mesa privada") }
         OutlinedButton(onClick = onPractica) { Text("Modo práctica") }
-        OutlinedButton(onClick = onMulti, modifier = Modifier.weight(1f)) { Text("Multijugador") }
+        OutlinedButton(onClick = onMulti) { Text("Multijugador") }
     }
 }
 
@@ -358,7 +373,7 @@ private fun UltimosResultados(nums: List<Int>) {
     val rojos = setOf(1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36)
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.Top
     ) {
         nums.take(10).forEach { n ->
             val c = when {
