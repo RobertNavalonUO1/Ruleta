@@ -14,6 +14,7 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
+
         // Campos de calibración expuestos para cambiar sin tocar código
         buildConfigField("Float", "ROULETTE_ASSET_OFFSET_DEG", "4.8649f") // valor inicial, ajustar en futuras builds
         buildConfigField("Boolean", "ROULETTE_ASSET_CCW", "false")
@@ -22,7 +23,7 @@ android {
     buildFeatures {
         viewBinding = true
         compose = true
-        buildConfig = true // habilitado explícitamente para permitir buildConfigField
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.14"

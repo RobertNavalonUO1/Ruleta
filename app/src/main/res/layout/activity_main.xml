@@ -3,4 +3,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <ImageButton
+        android:id="@+id/btnSound"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:background="@android:color/transparent"
+        android:src="@drawable/icsoundon"
+        android:contentDescription="Sound control" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
