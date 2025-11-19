@@ -34,6 +34,10 @@ class MainActivity : ComponentActivity() {
 
     private var isMuted = true
 
+    companion object {
+        const val REQUEST_CODE_PICK_AUDIO = 1001
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -74,6 +78,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .padding(16.dp)
+                            .padding(top = 10.dp)
                     ) {
                         val isBackgroundDark = true
                         Icon(

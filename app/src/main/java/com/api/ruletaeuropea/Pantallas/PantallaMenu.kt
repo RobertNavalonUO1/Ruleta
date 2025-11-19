@@ -34,6 +34,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import com.google.accompanist.flowlayout.FlowRow
+import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.net.Uri
+import android.content.Intent
+import com.api.ruletaeuropea.MusicService
+
+
+
+
 
 
 
@@ -48,20 +58,26 @@ fun PantallaMenu(
     val snackbarHostState = remember { SnackbarHostState() }
     val haptics = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
-
-    // Estados persistentes
-    // Eliminado limitesIndex y velocidadIndex (selección Bajo/Estándar/Alto y lenta/normal/rápida)
     val showReglas = rememberSaveable { mutableStateOf(false) }
-
     // Helpers de experiencia (mismas fórmulas que en la ruleta)
     fun expNecesaria(nivel: Int): Int = 100 + (nivel - 1) * 50
     val expActual = jugador.value.ExpActual
     val nivelActual = jugador.value.Nivel
     val expNivel = expNecesaria(nivelActual)
     val progresoExp = (expActual.toFloat() / expNivel.toFloat()).coerceIn(0f, 1f)
-
-    // Eliminado LaunchedEffect que mostraba snackbar al cambiar preferencias de límites/velocidad
-
+    val context = LocalContext.current
+// Launcher para seleccionar archivo MP3
+    val pickAudioLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let {
+            val intent = Intent(context, MusicService::class.java).apply {
+                putExtra("action", "SET_MUSIC")
+                putExtra("audioUri", uri.toString())
+            }
+            context.startService(intent)
+        }
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -230,6 +246,43 @@ fun PantallaMenu(
                 )
             }
         }
+
+        val context = LocalContext.current
+
+        val pickAudioLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.OpenDocument()
+        ) { uri: Uri? ->
+            if (uri != null) {
+                // Permitir que la app siga teniendo acceso al archivo
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+
+                // Llamar al servicio con el nuevo archivo
+                val intent = Intent(context, MusicService::class.java).apply {
+                    putExtra("action", "SET_MUSIC")
+                    putExtra("audioUri", uri.toString())
+                }
+                context.startService(intent)
+            }
+        }
+        // Botón Musica arriba derecha (Abre selector de audio)
+        IconButton(
+            onClick = {
+                pickAudioLauncher.launch(arrayOf("audio/mpeg"))
+            },
+                    modifier = Modifier
+                    .align(Alignment.TopEnd) // Arriba a la derecha del Box padre
+                .padding(end = 45.dp, top = 0.dp) // Ajusta separación respecto al botón de volumen
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.icselectmusic), // tu ícono de música
+                contentDescription = "Cambiar música",
+                tint = Color.White // o cambia según fondo
+            )
+        }
+
 
         // Botón Salir separado, abajo derecha, como OutlinedButton similar a PantallaLogin
         OutlinedButton(
