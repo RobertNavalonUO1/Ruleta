@@ -7,23 +7,26 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import com.api.ruletaeuropea.R
 import com.nativecoders.brand.NativeCodersGlitchLogo
 import kotlinx.coroutines.delay
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.foundation.layout.BoxWithConstraints
 
 @Composable
 fun PantallaIntro(navController: NavController) {
@@ -59,51 +62,111 @@ fun PantallaIntro(navController: NavController) {
     ) {
         AnimatedVisibility(
             visible = visible.value,
-            enter = fadeIn(animationSpec = tween(durationMillis = 1200)) + scaleIn(initialScale = 0.85f, animationSpec = tween(1200)),
+            enter = fadeIn(animationSpec = tween(1200)) + scaleIn(initialScale = 0.85f, animationSpec = tween(1200)),
             exit = fadeOut(animationSpec = tween(700)) + scaleOut(targetScale = 0.95f, animationSpec = tween(700))
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.wrapContentSize()) {
+            BoxWithConstraints(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .padding(horizontal = 20.dp)
+            ) {
+                val maxW = maxWidth
+                val imageSize = when {
+                    maxW < 300.dp -> 120.dp
+                    maxW < 360.dp -> 150.dp
+                    else -> 180.dp
+                }
+                val glitchScale = when {
+                    maxW < 300.dp -> 0.60f
+                    maxW < 340.dp -> 0.70f
+                    maxW < 380.dp -> 0.78f
+                    maxW < 420.dp -> 0.85f
+                    else -> 0.95f
+                }
+                Row(
+                    modifier = Modifier.wrapContentHeight(),
+                    horizontalArrangement = Arrangement.spacedBy(24.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.logo3d),
+                        contentDescription = "Logo 3D",
+                        modifier = Modifier.size(imageSize)
+                    )
+                    // Contenedor escalado para evitar salto de línea
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(imageSize * 0.6f) // proporcional a imagen
+                            .graphicsLayer { scaleX = glitchScale; scaleY = glitchScale }
+                    ) {
+                        NativeCodersGlitchLogo(
+                            modifier = Modifier.fillMaxWidth(),
+                            showTopLogo = false,
+                            intensity = 0.6f,
+                            line1 = "NATIVE",
+                            line2 = "CODERS",
+                            singleLine = true
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true, widthDp = 360, heightDp = 640)
+@Composable
+private fun PantallaIntroPreview() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black),
+        contentAlignment = Alignment.Center
+    ) {
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .padding(horizontal = 20.dp)
+        ) {
+            val maxW = maxWidth
+            val imageSize = when {
+                maxW < 300.dp -> 120.dp
+                maxW < 360.dp -> 150.dp
+                else -> 180.dp
+            }
+            val glitchScale = when {
+                maxW < 300.dp -> 0.60f
+                maxW < 340.dp -> 0.70f
+                maxW < 380.dp -> 0.78f
+                maxW < 420.dp -> 0.85f
+                else -> 0.95f
+            }
+            Row(
+                modifier = Modifier.wrapContentHeight(),
+                horizontalArrangement = Arrangement.spacedBy(24.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Image(
                     painter = painterResource(id = R.drawable.logo3d),
-                    contentDescription = "Logo",
-                    modifier = Modifier
-                        .size(220.dp)
-                        .zIndex(0f) // aseguramos que el 3D esté por debajo
+                    contentDescription = "Logo 3D",
+                    modifier = Modifier.size(imageSize)
                 )
-
-                Spacer(modifier = Modifier.height(40.dp)) // aumentado para evitar solapamientos durante las animaciones
-
-                // Mostrar el logo de texto Native Coders con efecto glitch con un pequeño delay
-                AnimatedVisibility(
-                    visible = showGlitch.value,
-                    enter = fadeIn(animationSpec = tween(durationMillis = 900)) + scaleIn(initialScale = 0.92f, animationSpec = tween(900), transformOrigin = TransformOrigin(0.5f, 0f)),
-                    exit = fadeOut(animationSpec = tween(600)) + scaleOut(targetScale = 0.96f, animationSpec = tween(600), transformOrigin = TransformOrigin(0.5f, 0f))
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(imageSize * 0.6f)
+                        .graphicsLayer { scaleX = glitchScale; scaleY = glitchScale }
                 ) {
-                    BoxWithConstraints(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(110.dp)
-                            .padding(top = 6.dp)
-                            .zIndex(1f) // forzamos que el glitch se dibuje por encima del logo3d
-                    ) {
-                        val scale = when {
-                            maxWidth < 300.dp -> 0.70f
-                            maxWidth < 340.dp -> 0.78f
-                            maxWidth < 380.dp -> 0.85f
-                            else -> 0.92f
-                        }
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .graphicsLayer { scaleX = scale; scaleY = scale }
-                        ) {
-                            NativeCodersGlitchLogo(
-                                modifier = Modifier.fillMaxWidth(),
-                                enableBackground = false,
-                                intensity = 0.6f
-                            )
-                        }
-                    }
+                    NativeCodersGlitchLogo(
+                        showTopLogo = false,
+                        intensity = 0.6f,
+                        line1 = "NATIVE",
+                        line2 = "CODERS",
+                        singleLine = true
+                    )
                 }
             }
         }

@@ -41,10 +41,7 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 
@@ -83,7 +80,7 @@ fun PantallaLogin(
         val contrasena = contrasenaState.value.trim()
 
         if (nombre.isEmpty() || contrasena.isEmpty()) {
-            mensajeError.value = "You must enter your username and password"
+            mensajeError.value = "Debes introducir usuario y contraseña"
         } else {
             scope.launch {
                 isLoading.value = true
@@ -111,12 +108,12 @@ fun PantallaLogin(
                                 popUpTo("login") { inclusive = true }
                             }
                         } else {
-                            mensajeError.value = "Incorrect password"
+                            mensajeError.value = "Contraseña incorrecta"
                         }
                     }
                 } catch (e: Exception) {
                     Log.e("PantallaLogin", "Error en login", e)
-                    mensajeError.value = e.message ?: "An unexpected error occurred. Please try again."
+                    mensajeError.value = e.message ?: "Ha ocurrido un error inesperado. Inténtalo de nuevo."
                 } finally {
                     isLoading.value = false
                 }
@@ -147,7 +144,9 @@ fun PantallaLogin(
                 )
         )
 
-        BoxWithConstraints(Modifier.fillMaxSize()) {
+        Box(
+            Modifier.fillMaxSize()
+        ) {
             val cardMaxWidth = when (sizeClass) {
                 "expanded" -> 600.dp
                 "medium" -> 500.dp
@@ -177,55 +176,57 @@ fun PantallaLogin(
 
             // Layout adaptativo
             if (isLandscape && sizeClass != "compact") {
-                // Fila: logo + formulario
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = horizontalPadding, vertical = verticalPadding)
-                        // Evita que el teclado tape los campos en alturas pequeñas
                         .imePadding()
                         .navigationBarsPadding(),
                     horizontalArrangement = Arrangement.spacedBy(32.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Logo escalado y centrado (ocúltalo si la altura es muy baja)
-                    if (!isVeryCompactHeight) {
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(end = 8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Image(
-                                painter = logo,
-                                contentDescription = "Logo",
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(CircleShape)
-                                    .padding(12.dp),
-                                contentScale = ContentScale.Fit
-                            )
-                        }
-                    }
-                    // Formulario en card
-                    LoginCard(
-                        nombreState = nombreState,
-                        contrasenaState = contrasenaState,
-                        mensajeError = mensajeError,
-                        passwordVisible = passwordVisible,
-                        isLoading = isLoading,
-                        onLogin = onLogin,
-                        navController = navController,
-                        jugador = jugador,
-                        dorado = dorado,
-                        isCompactHeight = isVeryCompactHeight || isLowHeight,
+                    // Columna izquierda: formulario completo (ancho fijo dentro del peso)
+                    Box(
                         modifier = Modifier
                             .weight(1f)
-                            .widthIn(max = cardMaxWidth)
-                            .verticalScroll(scrollState),
-                        spacing = formSpacing,
-                        headlineStyle = headlineStyle
-                    )
+                            .fillMaxHeight(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        LoginCard(
+                            nombreState = nombreState,
+                            contrasenaState = contrasenaState,
+                            mensajeError = mensajeError,
+                            passwordVisible = passwordVisible,
+                            isLoading = isLoading,
+                            onLogin = onLogin,
+                            navController = navController,
+                            jugador = jugador,
+                            dorado = dorado,
+                            isCompactHeight = isVeryCompactHeight || isLowHeight,
+                            modifier = Modifier
+                                .widthIn(max = cardMaxWidth)
+                                .verticalScroll(scrollState),
+                            spacing = formSpacing,
+                            headlineStyle = headlineStyle
+                        )
+                    }
+                    // Columna derecha: logo siempre visible en landscape
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = logo,
+                            contentDescription = "Logo de la aplicación",
+                            modifier = Modifier
+                                .fillMaxWidth(0.9f)
+                                .aspectRatio(1f) // cuadrado aproximado
+                                .padding(12.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
                 }
             } else {
                 // Columna apilada (portrait o pantalla compacta)
@@ -286,7 +287,6 @@ private fun LoginCard(
     navController: NavController,
     jugador: MutableState<Jugador>,
     dorado: Color,
-    // Ajustes extra cuando la altura disponible es muy reducida
     isCompactHeight: Boolean,
     modifier: Modifier = Modifier,
     spacing: Dp = 16.dp,
@@ -304,7 +304,7 @@ private fun LoginCard(
             verticalArrangement = Arrangement.spacedBy(spacing)
         ) {
             Text(
-                text = "Log in or create your account",
+                text = "Inicia sesión o crea tu cuenta",
                 color = dorado,
                 style = headlineStyle,
                 fontWeight = FontWeight.SemiBold,
@@ -316,8 +316,8 @@ private fun LoginCard(
                     nombreState.value = it
                     if (!mensajeError.value.isNullOrEmpty()) mensajeError.value = null
                 },
-                label = { Text("User name", color = dorado) },
-                placeholder = { Text("Enter your user name", color = dorado.copy(alpha = 0.7f)) },
+                label = { Text("Nombre de usuario", color = dorado) },
+                placeholder = { Text("Introduce tu nombre de usuario", color = dorado.copy(alpha = 0.7f)) },
                 singleLine = true,
                 leadingIcon = { Icon(imageVector = Icons.Filled.Person, contentDescription = null, tint = dorado) },
                 isError = mensajeError.value != null,
@@ -337,14 +337,14 @@ private fun LoginCard(
                     contrasenaState.value = it
                     if (!mensajeError.value.isNullOrEmpty()) mensajeError.value = null
                 },
-                label = { Text("Password", color = dorado) },
-                placeholder = { Text("Enter your password", color = dorado.copy(alpha = 0.7f)) },
+                label = { Text("Contraseña", color = dorado) },
+                placeholder = { Text("Introduce tu contraseña", color = dorado.copy(alpha = 0.7f)) },
                 singleLine = true,
                 leadingIcon = { Icon(imageVector = Icons.Filled.Lock, contentDescription = null, tint = dorado) },
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible.value = !passwordVisible.value }) {
                         val icon = if (passwordVisible.value) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
-                        val desc = if (passwordVisible.value) "Hide password" else "Show password"
+                        val desc = if (passwordVisible.value) "Ocultar contraseña" else "Mostrar contraseña"
                         Icon(imageVector = icon, contentDescription = desc, tint = dorado)
                     }
                 },
@@ -375,50 +375,53 @@ private fun LoginCard(
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(Modifier.width(10.dp))
-                    Text("Signing in...", color = Color.Black)
-                } else Text("Save and enter", color = Color.Black, fontWeight = FontWeight.Bold)
+                    Text("Entrando...", color = Color.Black)
+                } else Text("Entrar", color = Color.Black, fontWeight = FontWeight.Bold)
             }
 
-            if (isCompactHeight) {
-                // En alturas compactas, apilar acciones para que no se recorten
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    TextButton(onClick = { navController.navigate("register") }) { Text("Create account", color = dorado) }
-                    OutlinedButton(
-                        onClick = {
-                            jugador.value = Jugador(NombreJugador = "Guest", NumMonedas = 1000, Nivel = 1, ExpActual = 0)
-                            navController.navigate("menu") {
-                                popUpTo("login") { inclusive = true }
-                            }
-                        },
-                        enabled = !isLoading.value,
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = dorado),
-                        border = BorderStroke(1.dp, dorado)
-                    ) { Text("Log as guest") }
-                }
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    TextButton(onClick = { navController.navigate("register") }) { Text("Create account", color = dorado) }
-                    OutlinedButton(
-                        onClick = {
-                            jugador.value = Jugador(NombreJugador = "Guest", NumMonedas = 1000, Nivel = 1, ExpActual = 0)
-                            navController.navigate("menu") {
-                                popUpTo("login") { inclusive = true }
-                            }
-                        },
-                        enabled = !isLoading.value,
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = dorado),
-                        border = BorderStroke(1.dp, dorado)
-                    ) { Text("Log as guest") }
-                }
+            // Botones secundarios apilados siempre
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                TextButton(onClick = { navController.navigate("register") }) { Text("Crear cuenta", color = dorado) }
+                OutlinedButton(
+                    onClick = {
+                        jugador.value = Jugador(NombreJugador = "Invitado", NumMonedas = 1000, Nivel = 1, ExpActual = 0)
+                        navController.navigate("menu") {
+                            popUpTo("login") { inclusive = true }
+                        }
+                    },
+                    enabled = !isLoading.value,
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = dorado),
+                    border = BorderStroke(1.dp, dorado)
+                ) { Text("Entrar como invitado") }
             }
         }
     }
+}
+
+// Preview para Android Studio
+@androidx.compose.ui.tooling.preview.Preview(
+    name = "Pantalla Login",
+    showBackground = true,
+    showSystemUi = true
+)
+@Composable
+private fun PantallaLoginPreview() {
+    // NavController de prueba
+    val navController = androidx.navigation.compose.rememberNavController()
+    // Estado de jugador simulado
+    val jugadorState = remember { mutableStateOf(
+        Jugador(
+            NombreJugador = "",
+            NumMonedas = 1000,
+            Nivel = 1,
+            ExpActual = 0
+        )
+    ) }
+    // En caso de tener un Theme propio se puede envolver aquí. Ejemplo:
+    // AppTheme { PantallaLogin(navController, jugadorState) }
+    PantallaLogin(navController = navController, jugador = jugadorState)
 }
