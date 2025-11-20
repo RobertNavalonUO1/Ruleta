@@ -73,6 +73,8 @@ fun PantallaLogin(
         else -> "compact"
     }
     val isLowHeight = heightDp < 520
+    // Aún más compacto: teléfonos muy pequeños o con teclado mostrando poco espacio útil
+    val isVeryCompactHeight = heightDp < 460
     val scrollState = rememberScrollState()
 
     // Acción de login reutilizable (botón y tecla Done)
@@ -146,7 +148,6 @@ fun PantallaLogin(
         )
 
         BoxWithConstraints(Modifier.fillMaxSize()) {
-            val maxW = maxWidth
             val cardMaxWidth = when (sizeClass) {
                 "expanded" -> 600.dp
                 "medium" -> 500.dp
@@ -156,11 +157,23 @@ fun PantallaLogin(
             val horizontalPadding = when (sizeClass) {
                 "expanded" -> 48.dp
                 "medium" -> 40.dp
+                else -> if (isVeryCompactHeight) 16.dp else 24.dp
+            }
+            val verticalPadding = when {
+                isVeryCompactHeight -> 6.dp
+                isLowHeight -> 8.dp
                 else -> 24.dp
             }
-            val verticalPadding = if (isLowHeight) 8.dp else 24.dp
-            val formSpacing = if (isLowHeight) 12.dp else 16.dp
-            val headlineStyle = if (sizeClass == "compact") MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium
+            val formSpacing = when {
+                isVeryCompactHeight -> 8.dp
+                isLowHeight -> 12.dp
+                else -> 16.dp
+            }
+            val headlineStyle = when {
+                isVeryCompactHeight -> MaterialTheme.typography.titleMedium
+                sizeClass == "compact" -> MaterialTheme.typography.titleLarge
+                else -> MaterialTheme.typography.headlineMedium
+            }
 
             // Layout adaptativo
             if (isLandscape && sizeClass != "compact") {
@@ -168,26 +181,31 @@ fun PantallaLogin(
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = horizontalPadding, vertical = verticalPadding),
+                        .padding(horizontal = horizontalPadding, vertical = verticalPadding)
+                        // Evita que el teclado tape los campos en alturas pequeñas
+                        .imePadding()
+                        .navigationBarsPadding(),
                     horizontalArrangement = Arrangement.spacedBy(32.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Logo escalado y centrado
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(end = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Image(
-                            painter = logo,
-                            contentDescription = "Logo",
+                    // Logo escalado y centrado (ocúltalo si la altura es muy baja)
+                    if (!isVeryCompactHeight) {
+                        Box(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(CircleShape)
-                                .padding(12.dp),
-                            contentScale = ContentScale.Fit
-                        )
+                                .weight(1f)
+                                .padding(end = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Image(
+                                painter = logo,
+                                contentDescription = "Logo",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(CircleShape)
+                                    .padding(12.dp),
+                                contentScale = ContentScale.Fit
+                            )
+                        }
                     }
                     // Formulario en card
                     LoginCard(
@@ -200,6 +218,7 @@ fun PantallaLogin(
                         navController = navController,
                         jugador = jugador,
                         dorado = dorado,
+                        isCompactHeight = isVeryCompactHeight || isLowHeight,
                         modifier = Modifier
                             .weight(1f)
                             .widthIn(max = cardMaxWidth)
@@ -214,19 +233,24 @@ fun PantallaLogin(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = horizontalPadding, vertical = verticalPadding)
-                        .verticalScroll(scrollState),
+                        .verticalScroll(scrollState)
+                        // Da espacio a barras del sistema y teclado en pantallas pequeñas
+                        .imePadding()
+                        .navigationBarsPadding(),
                     verticalArrangement = Arrangement.spacedBy(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Image(
-                        painter = logo,
-                        contentDescription = "Logo",
-                        modifier = Modifier
-                            .widthIn(max = 260.dp)
-                            .fillMaxWidth(0.6f)
-                            .padding(top = if (isLowHeight) 8.dp else 24.dp),
-                        contentScale = ContentScale.Fit
-                    )
+                    if (!isVeryCompactHeight) {
+                        Image(
+                            painter = logo,
+                            contentDescription = "Logo",
+                            modifier = Modifier
+                                .widthIn(max = 220.dp)
+                                .fillMaxWidth(0.55f)
+                                .padding(top = if (isLowHeight) 8.dp else 24.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
                     LoginCard(
                         nombreState = nombreState,
                         contrasenaState = contrasenaState,
@@ -237,6 +261,7 @@ fun PantallaLogin(
                         navController = navController,
                         jugador = jugador,
                         dorado = dorado,
+                        isCompactHeight = isVeryCompactHeight || isLowHeight,
                         modifier = Modifier
                             .fillMaxWidth()
                             .widthIn(max = cardMaxWidth),
@@ -261,6 +286,8 @@ private fun LoginCard(
     navController: NavController,
     jugador: MutableState<Jugador>,
     dorado: Color,
+    // Ajustes extra cuando la altura disponible es muy reducida
+    isCompactHeight: Boolean,
     modifier: Modifier = Modifier,
     spacing: Dp = 16.dp,
     headlineStyle: androidx.compose.ui.text.TextStyle
@@ -273,14 +300,15 @@ private fun LoginCard(
     ) {
         Column(
             modifier = Modifier
-                .padding(horizontal = 24.dp, vertical = spacing),
+                .padding(horizontal = if (isCompactHeight) 16.dp else 24.dp, vertical = spacing),
             verticalArrangement = Arrangement.spacedBy(spacing)
         ) {
             Text(
                 text = "Log in or create your account",
                 color = dorado,
                 style = headlineStyle,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2
             )
             OutlinedTextField(
                 value = nombreState.value,
@@ -338,7 +366,7 @@ private fun LoginCard(
                 onClick = onLogin,
                 enabled = !isLoading.value,
                 colors = ButtonDefaults.buttonColors(containerColor = dorado),
-                modifier = Modifier.height(52.dp)
+                modifier = Modifier.height(if (isCompactHeight) 44.dp else 52.dp)
             ) {
                 if (isLoading.value) {
                     CircularProgressIndicator(
@@ -350,23 +378,46 @@ private fun LoginCard(
                     Text("Signing in...", color = Color.Black)
                 } else Text("Save and enter", color = Color.Black, fontWeight = FontWeight.Bold)
             }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextButton(onClick = { navController.navigate("register") }) { Text("Create account", color = dorado) }
-                OutlinedButton(
-                    onClick = {
-                        jugador.value = Jugador(NombreJugador = "Guest", NumMonedas = 1000, Nivel = 1, ExpActual = 0)
-                        navController.navigate("menu") {
-                            popUpTo("login") { inclusive = true }
-                        }
-                    },
-                    enabled = !isLoading.value,
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = dorado),
-                    border = BorderStroke(1.dp, dorado)
-                ) { Text("Log as guest") }
+
+            if (isCompactHeight) {
+                // En alturas compactas, apilar acciones para que no se recorten
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    TextButton(onClick = { navController.navigate("register") }) { Text("Create account", color = dorado) }
+                    OutlinedButton(
+                        onClick = {
+                            jugador.value = Jugador(NombreJugador = "Guest", NumMonedas = 1000, Nivel = 1, ExpActual = 0)
+                            navController.navigate("menu") {
+                                popUpTo("login") { inclusive = true }
+                            }
+                        },
+                        enabled = !isLoading.value,
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = dorado),
+                        border = BorderStroke(1.dp, dorado)
+                    ) { Text("Log as guest") }
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = { navController.navigate("register") }) { Text("Create account", color = dorado) }
+                    OutlinedButton(
+                        onClick = {
+                            jugador.value = Jugador(NombreJugador = "Guest", NumMonedas = 1000, Nivel = 1, ExpActual = 0)
+                            navController.navigate("menu") {
+                                popUpTo("login") { inclusive = true }
+                            }
+                        },
+                        enabled = !isLoading.value,
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = dorado),
+                        border = BorderStroke(1.dp, dorado)
+                    ) { Text("Log as guest") }
+                }
             }
         }
     }

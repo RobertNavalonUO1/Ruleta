@@ -22,6 +22,8 @@ import androidx.navigation.NavController
 import com.api.ruletaeuropea.R
 import com.nativecoders.brand.NativeCodersGlitchLogo
 import kotlinx.coroutines.delay
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.layout.BoxWithConstraints
 
 @Composable
 fun PantallaIntro(navController: NavController) {
@@ -77,15 +79,31 @@ fun PantallaIntro(navController: NavController) {
                     enter = fadeIn(animationSpec = tween(durationMillis = 900)) + scaleIn(initialScale = 0.92f, animationSpec = tween(900), transformOrigin = TransformOrigin(0.5f, 0f)),
                     exit = fadeOut(animationSpec = tween(600)) + scaleOut(targetScale = 0.96f, animationSpec = tween(600), transformOrigin = TransformOrigin(0.5f, 0f))
                 ) {
-                    NativeCodersGlitchLogo(
+                    BoxWithConstraints(
                         modifier = Modifier
-                            .fillMaxWidth(0.8f)
+                            .fillMaxWidth()
                             .height(110.dp)
                             .padding(top = 6.dp)
-                            .zIndex(1f), // forzamos que el glitch se dibuje por encima del logo3d
-                        enableBackground = false,
-                        intensity = 0.6f
-                    )
+                            .zIndex(1f) // forzamos que el glitch se dibuje por encima del logo3d
+                    ) {
+                        val scale = when {
+                            maxWidth < 300.dp -> 0.70f
+                            maxWidth < 340.dp -> 0.78f
+                            maxWidth < 380.dp -> 0.85f
+                            else -> 0.92f
+                        }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .graphicsLayer { scaleX = scale; scaleY = scale }
+                        ) {
+                            NativeCodersGlitchLogo(
+                                modifier = Modifier.fillMaxWidth(),
+                                enableBackground = false,
+                                intensity = 0.6f
+                            )
+                        }
+                    }
                 }
             }
         }

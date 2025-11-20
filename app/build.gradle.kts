@@ -17,6 +17,7 @@ android {
         // Campos de calibración expuestos para cambiar sin tocar código
         buildConfigField("Float", "ROULETTE_ASSET_OFFSET_DEG", "4.8649f") // valor inicial, ajustar en futuras builds
         buildConfigField("Boolean", "ROULETTE_ASSET_CCW", "false")
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildFeatures {
@@ -74,4 +75,9 @@ dependencies {
 
     // Test unitarios
     testImplementation("junit:junit:4.13.2")
+
+    // Instrumented (Android) tests
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 }
