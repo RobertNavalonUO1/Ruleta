@@ -1,16 +1,12 @@
+@file:Suppress("UnusedBoxWithConstraintsScope")
 package com.api.ruletaeuropea.pantallas
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.tween
+
+import android.content.Intent
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -18,24 +14,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.api.ruletaeuropea.data.entity.Jugador
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.runtime.LaunchedEffect
 import com.api.ruletaeuropea.R
 import androidx.compose.foundation.BorderStroke
@@ -45,12 +33,17 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
-// Responsive imports solicitados
 import android.content.res.Configuration
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.ui.platform.LocalContext
+import com.api.ruletaeuropea.MusicService
+
 
 @Composable
 fun PantallaMenu(
@@ -67,12 +60,20 @@ fun PantallaMenu(
     val velocidadIndex = rememberSaveable { mutableStateOf(1) } // Normal por defecto
     val isDark = rememberSaveable { mutableStateOf(false) }
     val showReglas = rememberSaveable { mutableStateOf(false) }
+    val context = LocalContext.current
 
-    // Mostrar snackbar solo al cambiar segmentos
-    LaunchedEffect(limitesIndex.value, velocidadIndex.value) {
-        snackbarHostState.showSnackbar("Preferencia guardada")
+    // Launcher para seleccionar archivo MP3
+    val pickAudioLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let {
+            val intent = Intent(context, MusicService::class.java).apply {
+                putExtra("action", "SET_MUSIC")
+                putExtra("audioUri", uri.toString())
+            }
+            context.startService(intent)
+        }
     }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -93,11 +94,8 @@ fun PantallaMenu(
         val isPortrait = cfg.orientation == Configuration.ORIENTATION_PORTRAIT
 
         BoxWithConstraints(Modifier.fillMaxSize()) {
-            val density = LocalDensity.current
-            val maxW = maxWidth
             val maxH = maxHeight
             val isCompactH = maxH < 520.dp
-            val isVeryWide = maxW > 900.dp
 
             // ElevatedCard responsive sin scroll
             ElevatedCard(
@@ -112,9 +110,8 @@ fun PantallaMenu(
             ) {
                 val innerPad = if (isPortrait && !isCompactH) 20.dp else 16.dp
 
-                Box { // Para anclar snackbar host
-                    if (isPortrait && !isCompactH) {
-                        // Una columna (portrait alto suficiente)
+                Box {
+                    if (isPortrait && !isCompactH) { //Modo vertical
                         Column(
                             modifier = Modifier
                                 .padding(all = innerPad),
@@ -137,38 +134,7 @@ fun PantallaMenu(
                                     scope.launch { snackbarHostState.showSnackbar("Abre tienda (pendiente)") }
                                 }
                             )
-
-                            PillsSection()
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                TextButton(onClick = { showReglas.value = true }) { Text("Reglas", color = dorado) }
-                                ToggleTema(isDark = isDark.value) { isDark.value = !isDark.value }
-                            }
-
-                            Segment(
-                                items = listOf("Bajo", "Estándar", "Alto"),
-                                selected = limitesIndex.value,
-                                onSelect = { idx ->
-                                    limitesIndex.value = idx
-                                    haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                dense = true
-                            )
-                            Segment(
-                                items = listOf("Lenta", "Normal", "Rápida"),
-                                selected = velocidadIndex.value,
-                                onSelect = { idx ->
-                                    velocidadIndex.value = idx
-                                    haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                dense = true
-                            )
+                            Spacer(modifier = Modifier.height(5.dp))
 
                             AccesosRapidos(
                                 onPrivada = {
@@ -184,6 +150,7 @@ fun PantallaMenu(
                                     scope.launch { snackbarHostState.showSnackbar("Buscando partidas multijugador…") }
                                 }
                             )
+                            Spacer(modifier = Modifier.height(5.dp))
 
                             UltimosResultados(nums = listOf(14, 0, 29, 3, 21, 7, 17, 32, 1, 9))
 
@@ -197,8 +164,7 @@ fun PantallaMenu(
                                 dense = false
                             )
                         }
-                    } else {
-                        // Dos columnas (landscape o altura compacta)
+                    } else { //Modo horizontal o compacto (Dos columnas)
                         Row(
                             modifier = Modifier
                                 .padding(vertical = 20.dp, horizontal = 20.dp)
@@ -206,7 +172,7 @@ fun PantallaMenu(
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                             verticalAlignment = Alignment.Top
                         ) {
-                            Column(
+                            Column( //Columna Izquierda
                                 modifier = Modifier.weight(1f),
                                 verticalArrangement = Arrangement.spacedBy(12.dp),
                                 horizontalAlignment = Alignment.Start
@@ -226,41 +192,6 @@ fun PantallaMenu(
                                         scope.launch { snackbarHostState.showSnackbar("Abre tienda (pendiente)") }
                                     }
                                 )
-                                PillsSection()
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    TextButton(onClick = { showReglas.value = true }) { Text("Reglas", color = dorado) }
-                                    ToggleTema(isDark = isDark.value) { isDark.value = !isDark.value }
-                                }
-                            }
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
-                                horizontalAlignment = Alignment.Start
-                            ) {
-                                Segment(
-                                    items = listOf("Bajo", "Estándar", "Alto"),
-                                    selected = limitesIndex.value,
-                                    onSelect = { idx ->
-                                        limitesIndex.value = idx
-                                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    dense = true
-                                )
-                                Segment(
-                                    items = listOf("Lenta", "Normal", "Rápida"),
-                                    selected = velocidadIndex.value,
-                                    onSelect = { idx ->
-                                        velocidadIndex.value = idx
-                                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    dense = true
-                                )
                                 AccesosRapidos(
                                     onPrivada = {
                                         snackbarHostState.currentSnackbarData?.dismiss()
@@ -275,7 +206,14 @@ fun PantallaMenu(
                                         scope.launch { snackbarHostState.showSnackbar("Buscando partidas multijugador…") }
                                     }
                                 )
-                                UltimosResultados(nums = listOf(14, 0, 29, 3, 21, 7, 17, 32, 1, 9))
+
+                            }
+                            Column( //Columna Derecha:
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                horizontalAlignment = Alignment.Start
+                            ) {
+
                                 MenuButtons(
                                     onPlay = {
                                         haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -298,8 +236,42 @@ fun PantallaMenu(
                 }
             }
         }
+        val pickAudioLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.OpenDocument()
+        ) { uri: Uri? ->
+            if (uri != null) {
+                // Permitir que la app siga teniendo acceso al archivo
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
 
-        // Botón Salir separado, abajo derecha, como OutlinedButton similar a PantallaLogin
+                // Llamar al servicio con el nuevo archivo
+                val intent = Intent(context, MusicService::class.java).apply {
+                    putExtra("action", "SET_MUSIC")
+                    putExtra("audioUri", uri.toString())
+                }
+                context.startService(intent)
+            }
+        }
+
+        // Botón Musica arriba derecha (Abre selector de audio)
+        IconButton(
+            onClick = {
+                pickAudioLauncher.launch(arrayOf("audio/mpeg"))
+            },
+            modifier = Modifier
+                .align(Alignment.TopEnd) // Arriba a la derecha del Box padre
+                .padding(end = 45.dp, top = 0.dp) // Ajusta separación respecto al botón de volumen
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.icselectmusic), // tu ícono de música
+                contentDescription = "Cambiar música",
+                tint = Color.White // o cambia según fondo
+            )
+        }
+
+        // Botón Salir separado, abajo derecha
         OutlinedButton(
             onClick = {
                 jugador.value = Jugador(NombreJugador = "Guest", NumMonedas = 1000)
