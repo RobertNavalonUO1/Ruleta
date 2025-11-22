@@ -46,6 +46,31 @@ import com.api.ruletaeuropea.data.entity.Historial
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.platform.LocalContext
+import android.content.ContentValues
+import android.provider.MediaStore
+import androidx.core.view.drawToBitmap
+import android.graphics.Bitmap
+import android.content.Context
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import kotlinx.coroutines.launch
+
+
+
+
+
+
+
+
 
 
 // Colores y tamaños comunes (evitar magic numbers)
@@ -249,19 +274,32 @@ private fun ResultadoSection(
     resultado: Int,
     onActualizarSaldo: (Int) -> Unit
 ) {
-    // Calcular ganadoras y pago total (recordado por resultado y apuestas)
-    val apuestasGanadoras = remember(resultado, apuestas.value) { apuestas.value.filter { evaluarApuesta(it, resultado) } }
-    val pagoTotal = remember(resultado, apuestas.value) { calcularPago(apuestas.value, resultado) }
+    val context = LocalContext.current
+    val view = LocalView.current
+
+    // Snackbar
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+
+    // Estado para captura de pantalla
+    var screenshotBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+
+    // Calcular apuestas ganadoras y pago total
+    val apuestasGanadoras = remember(resultado, apuestas.value) {
+        apuestas.value.filter { evaluarApuesta(it, resultado) }
+    }
+    val pagoTotal = remember(resultado, apuestas.value) {
+        calcularPago(apuestas.value, resultado)
+    }
 
     // Guardar que ya persistimos este resultado (sobrevive rotación)
     var lastPersistedResult by rememberSaveable { mutableStateOf<Int?>(null) }
 
-    // Escrituras a DB una única vez por resultado (clave: resultado)
+    // Escrituras a DB una única vez por resultado
     LaunchedEffect(resultado) {
         if (lastPersistedResult == resultado) return@LaunchedEffect
 
-        val pago = pagoTotal
-        val nuevoSaldo = jugador.NumMonedas + pago
+        val nuevoSaldo = jugador.NumMonedas + pagoTotal
 
         withContext(Dispatchers.IO) {
             val daoRuleta = App.database.ruletaDao()
@@ -269,39 +307,33 @@ private fun ResultadoSection(
             val daoJugador = App.database.jugadorDao()
             val daoHistorial = App.database.historialDao()
 
-            // Inserta el resultado de la ruleta y obtiene ID
             val idRuleta = daoRuleta.insertar(Ruleta(NumeroGanador = resultado))
+            daoJugador.actualizar(jugador.copy(NumMonedas = nuevoSaldo))
 
-            // Actualiza saldo del jugador en BD
-            val jugadorActualizado = jugador.copy(NumMonedas = nuevoSaldo)
-            daoJugador.actualizar(jugadorActualizado)
-
-            // Guarda cada apuesta y su registro de historial
             apuestas.value.forEach { apuesta ->
                 val apuestaCompleta = construirApuestaCompleta(apuesta, jugador, resultado, idRuleta)
                 val idApuesta = daoApuesta.insertar(apuestaCompleta)
-                val registroHistorial = Historial(
-                    NombreJugador = jugador.NombreJugador,
-                    NumApuesta = idApuesta,
-                    Resultado = resultado.toString(),
-                    SaldoDespues = nuevoSaldo
+                daoHistorial.insertar(
+                    Historial(
+                        NombreJugador = jugador.NombreJugador,
+                        NumApuesta = idApuesta,
+                        Resultado = resultado.toString(),
+                        SaldoDespues = nuevoSaldo
+                    )
                 )
-                daoHistorial.insertar(registroHistorial)
             }
         }
 
-        // Actualiza estado en UI (una vez)
-        onActualizarSaldo(pago)
+        onActualizarSaldo(pagoTotal)
         lastPersistedResult = resultado
     }
 
-    //Mostrar Resultado
     Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 24.dp)
     ) {
-        //Numero ganador en la parte superior
+        // Número ganador
         ResultBadge(
             numero = resultado,
             modifier = Modifier
@@ -311,7 +343,7 @@ private fun ResultadoSection(
         )
         Spacer(modifier = Modifier.height(104.dp))
 
-        // Fondo transparente con resultados apuestas
+        // Fondo y listado de apuestas
         Box(
             modifier = Modifier
                 .padding(top = 120.dp, bottom = 20.dp)
@@ -321,11 +353,9 @@ private fun ResultadoSection(
                 .border(width = 1.dp, color = Color.White.copy(alpha = 0.08f), shape = CardShape)
         ) {
             Column(
-                modifier = Modifier
-                    .padding(16.dp),
+                modifier = Modifier.padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                //Mensaje de ganar o perder
                 Text(
                     text = if (pagoTotal > 0) "YOU WON" else "YOU LOSE",
                     fontSize = 36.sp,
@@ -335,7 +365,6 @@ private fun ResultadoSection(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Lista scrollable de apuestas
                 Column(
                     modifier = Modifier
                         .fillMaxWidth(0.33f)
@@ -364,9 +393,8 @@ private fun ResultadoSection(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Mensaje total ganado
                 Text(
-                    text = "TOTAL: $pagoTotal C", // TODO(i18n)
+                    text = "TOTAL: $pagoTotal C",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
@@ -374,7 +402,7 @@ private fun ResultadoSection(
             }
         }
 
-        // Botones apilados en la esquina inferior derecha
+        // Botones de acción
         Column(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -393,9 +421,7 @@ private fun ResultadoSection(
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)),
                 modifier = Modifier.height(48.dp)
-            ) {
-                Text(text = "Exit", fontWeight = FontWeight.SemiBold)
-            }
+            ) { Text(text = "Exit", fontWeight = FontWeight.SemiBold) }
 
             Button(
                 onClick = {
@@ -405,12 +431,84 @@ private fun ResultadoSection(
                 shape = PillShape,
                 colors = ButtonDefaults.buttonColors(containerColor = Gold, contentColor = Color.Black),
                 modifier = Modifier.height(48.dp)
+            ) { Text(text = "Play Again", fontWeight = FontWeight.SemiBold) }
+        }
+
+        // Icono de captura de pantalla
+        IconButton(
+            onClick = {
+                val bitmap = view.drawToBitmap()
+                screenshotBitmap = bitmap.asImageBitmap()
+
+                // Guardar y mostrar snackbar
+                screenshotBitmap?.let { img ->
+                    saveToGallery(context, img)
+                    screenshotBitmap = null
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar(
+                            message = "Screenshot saved!",
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(16.dp)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.iccamera),
+                contentDescription = "Capturar pantalla",
+                tint = Color.White
+            )
+        }
+
+        // SnackbarHost
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(bottom = 16.dp, start = 50.dp),
+        ) { data ->
+            // Snackbar personalizado
+            androidx.compose.material3.Snackbar(
+                containerColor = Color.Black.copy(alpha = 0.6f), // semi-transparente
+                contentColor = Color.White,
+                modifier = Modifier
+                    .width(200.dp)
+                    .padding(horizontal = 8.dp) // margen lateral opcional
             ) {
-                Text(text = "Play Again", fontWeight = FontWeight.SemiBold)
+                Text(
+                    text = data.visuals.message,
+                    fontSize = 14.sp
+                )
             }
         }
     }
+}
 
+
+
+
+// Función para guardar en galería (Android 10+)
+fun saveToGallery(context: Context, image: ImageBitmap) {
+    val bitmap = image.asAndroidBitmap()
+    val filename = "captura_${System.currentTimeMillis()}.png"
+
+    val contentValues = ContentValues().apply {
+        put(MediaStore.Images.Media.DISPLAY_NAME, filename)
+        put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+        put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/RuletaApp")
+    }
+
+    val uri = context.contentResolver.insert(
+        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+        contentValues
+    ) ?: return
+
+    context.contentResolver.openOutputStream(uri)?.let { out ->
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+    }
 }
 
 
@@ -442,9 +540,9 @@ private fun ResultBadge(
     }
 }
 
-/**
- * Botones de acción: jugar de nuevo (primario dorado) y salir (outlined).
- */
+
+//Botones de acción: jugar de nuevo y salir.
+
 @Composable
 private fun ActionButtons(
     onPlayAgain: () -> Unit,
@@ -452,7 +550,8 @@ private fun ActionButtons(
     modifier: Modifier = Modifier
 ) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        //horizontalArrangement = Arrangement.spacedBy(16.dp),
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp),

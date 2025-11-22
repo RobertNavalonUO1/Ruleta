@@ -132,14 +132,15 @@ fun PantallaLogin(
             ElevatedCard(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(16.dp),
+                    .padding(8.dp),
                 shape = MaterialTheme.shapes.extraLarge,
                 colors = CardDefaults.elevatedCardColors(containerColor = Color(0xCC000000)),
                 elevation = CardDefaults.elevatedCardElevation(defaultElevation = 8.dp)
             ) {
                 Column(
                     modifier = Modifier
-                        .padding(24.dp),
+                        .padding(24.dp)
+                        .fillMaxHeight(),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(

@@ -39,7 +39,6 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.activity:activity-compose:1.8.0")
 
-
     // Compose - usar Compose BOM para gestionar versiones
     implementation(platform("androidx.compose:compose-bom:2025.01.00"))
     implementation("androidx.compose.ui:ui")
@@ -47,6 +46,7 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")
+
     // Añadido: foundation para KeyboardOptions (ubicado en foundation.text)
     implementation("androidx.compose.foundation:foundation")
 
@@ -63,9 +63,13 @@ dependencies {
     implementation("androidx.room:room-ktx:2.6.1")
     kapt("androidx.room:room-compiler:2.6.1")
 
-    // Necesario para Icons.Filled.Visibility / VisibilityOff
+    // Icons.Filled.Visibility / VisibilityOff
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.material:material-icons-extended:1.7.5")
+
+    implementation("androidx.compose.ui:ui:1.5.0")
+    implementation("androidx.compose.ui:ui-graphics:1.5.0")
+    implementation("androidx.compose.material3:material3:1.2.0")
 }
 
 
