@@ -44,7 +44,9 @@ import kotlinx.coroutines.withContext
 import com.api.ruletaeuropea.data.entity.Ruleta
 import com.api.ruletaeuropea.data.entity.Historial
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+
 
 // Colores y tamaños comunes (evitar magic numbers)
 private val Gold = Color(0xFFFFD700)
@@ -75,11 +77,9 @@ fun PantallaRuletaGirando(
         mostrarResultado = true
     }
 
-    // Reemplazado por Box porque no usamos maxWidth/maxHeight aquí
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .systemBarsPadding()
     ) {
         // Fondo según estado
         val fondoResId = if (mostrarResultado) R.drawable.fondo_1 else R.drawable.fondo
@@ -149,10 +149,9 @@ private fun GirandoSection(
             .padding(24.dp)
     ) {
         // Guardar valores de constraints antes de entrar al RowScope
-        val boxMaxWidth = maxWidth
-        val wheelSize = boxMaxWidth * 0.55f
+        val wheelSize = this@BoxWithConstraints.maxWidth * 0.55f
         val panelMinWidth = 280.dp
-        val panelWidth = maxOf(panelMinWidth, boxMaxWidth - wheelSize - 32.dp)
+        val panelWidth = (this@BoxWithConstraints.maxWidth - wheelSize - 32.dp).coerceAtLeast(panelMinWidth)
 
         Row(
             modifier = Modifier.fillMaxSize(),
@@ -296,80 +295,124 @@ private fun ResultadoSection(
         lastPersistedResult = resultado
     }
 
-    Column(
+    //Mostrar Resultado
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceEvenly
+            .padding(horizontal = 24.dp)
     ) {
+        //Numero ganador en la parte superior
         ResultBadge(
             numero = resultado,
             modifier = Modifier
-                .size(120.dp)
-                .semantics { contentDescription = "Resultado: $resultado" } // TODO(i18n)
+                .size(100.dp)
+                .align(Alignment.TopCenter)
+                .padding(top = 24.dp)
         )
+        Spacer(modifier = Modifier.height(104.dp))
 
-        // Panel de resultados (glass card)
-        Column(
+        // Fondo transparente con resultados apuestas
+        Box(
             modifier = Modifier
+                .padding(top = 120.dp, bottom = 20.dp)
+                .align(Alignment.TopCenter)
                 .clip(CardShape)
                 .background(GlassBg.copy(alpha = 0.8f))
                 .border(width = 1.dp, color = Color.White.copy(alpha = 0.08f), shape = CardShape)
-                .padding(16.dp)
-                .widthIn(min = 280.dp, max = 420.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (pagoTotal > 0) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                //Mensaje de ganar o perder
                 Text(
-                    text = "YOU WON", // TODO(i18n)
-                    fontSize = 56.sp,
+                    text = if (pagoTotal > 0) "YOU WON" else "YOU LOSE",
+                    fontSize = 36.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Gold
+                    color = if (pagoTotal > 0) Gold else Color(0xFFD0D0D0)
                 )
-            } else {
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Lista scrollable de apuestas
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(0.33f)
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    apuestasGanadoras.forEach { it ->
+                        Box(
+                            modifier = Modifier
+                                .clip(CardShape)
+                                .background(GlassBg.copy(alpha = 0.6f))
+                                .border(1.dp, Color.White.copy(alpha = 0.08f), CardShape)
+                                .padding(12.dp)
+                                .fillMaxWidth(0.9f)
+                                .padding(vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "${tipoApuesta(it.numero)}: ${it.valorMoneda}",
+                                fontSize = 16.sp,
+                                color = Gold
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Mensaje total ganado
                 Text(
-                    text = "YOU LOSE", // TODO(i18n)
-                    fontSize = 56.sp,
+                    text = "TOTAL: $pagoTotal C", // TODO(i18n)
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFFD0D0D0)
+                    color = Color.White
                 )
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            apuestasGanadoras.forEach { it ->
-                Text(
-                    text = "${tipoApuesta(it.numero)}: ${it.valorMoneda}",
-                    fontSize = 16.sp,
-                    color = Gold
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "TOTAL: $pagoTotal C", // TODO(i18n)
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
         }
 
-        ActionButtons(
-            onPlayAgain = {
-                apuestas.value = emptyList()
-                navController.popBackStack()
-            },
-            onExit = {
-                apuestas.value = emptyList()
-                navController.navigate("menu") {
-                    popUpTo("menu") { inclusive = true }
-                    launchSingleTop = true
-                }
+        // Botones apilados en la esquina inferior derecha
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedButton(
+                onClick = {
+                    apuestas.value = emptyList()
+                    navController.navigate("menu") {
+                        popUpTo("menu") { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                shape = PillShape,
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)),
+                modifier = Modifier.height(48.dp)
+            ) {
+                Text(text = "Exit", fontWeight = FontWeight.SemiBold)
             }
-        )
+
+            Button(
+                onClick = {
+                    apuestas.value = emptyList()
+                    navController.popBackStack()
+                },
+                shape = PillShape,
+                colors = ButtonDefaults.buttonColors(containerColor = Gold, contentColor = Color.Black),
+                modifier = Modifier.height(48.dp)
+            ) {
+                Text(text = "Play Again", fontWeight = FontWeight.SemiBold)
+            }
+        }
     }
+
 }
+
 
 /**
  * Muestra un badge redondeado con el número ganador y color contextual (rojo/negro/verde).
@@ -431,7 +474,7 @@ private fun ActionButtons(
             modifier = Modifier
                 .weight(1f)
                 .height(56.dp),
-            shape = PillShape,
+        shape = PillShape,
             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
             border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.5f))
         ) {
