@@ -4,6 +4,14 @@ import com.api.ruletaeuropea.Modelo.Apuesta
 import com.api.ruletaeuropea.data.entity.Jugador
 import com.api.ruletaeuropea.data.model.CategoriaApostada
 import com.api.ruletaeuropea.data.entity.Apuesta as ApuestaEntity
+import android.content.ContentValues
+import android.content.Context
+import android.graphics.Bitmap
+import android.provider.CalendarContract
+import android.provider.MediaStore
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+
 
 // Números rojos en ruleta europea
 val RedNumbers = setOf(
@@ -88,6 +96,46 @@ fun construirApuestaCompleta(
         Ganada = evaluarApuesta(apuestaUI, resultado),
         Pago = if (evaluarApuesta(apuestaUI, resultado)) apuestaUI.valorMoneda * multiplicador(apuestaUI) else 0
     )
+}
+
+// Función para guardar en galería (Android 10+)
+fun saveToGallery(context: Context, image: ImageBitmap) {
+    val bitmap = image.asAndroidBitmap()
+    val filename = "captura_${System.currentTimeMillis()}.png"
+
+    val contentValues = ContentValues().apply {
+        put(MediaStore.Images.Media.DISPLAY_NAME, filename)
+        put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+        put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/RuletaApp")
+    }
+
+    val uri = context.contentResolver.insert(
+        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+        contentValues
+    ) ?: return
+
+    context.contentResolver.openOutputStream(uri)?.let { out ->
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+    }
+}
+
+//Insertar evento en el calendario del dispositivo.
+fun addCalendarEvent(context: Context, title: String, description: String) {
+    val calID: Long = 1
+
+    val startMillis = System.currentTimeMillis()
+    val endMillis = startMillis + 60 * 60 * 1000 // duración 1 hora
+
+    val values = ContentValues().apply {
+        put(CalendarContract.Events.DTSTART, startMillis)
+        put(CalendarContract.Events.DTEND, endMillis)
+        put(CalendarContract.Events.TITLE, title)
+        put(CalendarContract.Events.DESCRIPTION, description)
+        put(CalendarContract.Events.CALENDAR_ID, calID)
+        put(CalendarContract.Events.EVENT_TIMEZONE, "Europe/Madrid")
+    }
+
+    context.contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
 }
 
 

@@ -50,27 +50,21 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalContext
-import android.content.ContentValues
-import android.provider.MediaStore
 import androidx.core.view.drawToBitmap
-import android.graphics.Bitmap
-import android.content.Context
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import kotlinx.coroutines.launch
-
-
-
-
-
-
-
-
+import com.api.ruletaeuropea.logica.saveToGallery
+import com.api.ruletaeuropea.logica.addCalendarEvent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.widget.Toast
+import android.Manifest
+import androidx.compose.runtime.Composable
 
 
 // Colores y tamaños comunes (evitar magic numbers)
@@ -328,6 +322,32 @@ private fun ResultadoSection(
         lastPersistedResult = resultado
     }
 
+    // Pedir permiso para leer y editar el calendario
+    val calendarPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { granted ->
+            if (granted) {
+                addCalendarEvent(context, "Roulette: Victory!", "You won $pagoTotal coins")
+                // Mensaje de confirmación
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar(
+                        message = "Event added to calendar!",
+                        duration = SnackbarDuration.Short
+                    )
+                }
+            } else {
+                Toast.makeText(context, "Calendar permission denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+    )
+
+    //Guardar victoria en calendario
+    LaunchedEffect(pagoTotal) {
+        if (pagoTotal > 0) {
+            calendarPermissionLauncher.launch(Manifest.permission.WRITE_CALENDAR)
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -488,28 +508,6 @@ private fun ResultadoSection(
 }
 
 
-
-
-// Función para guardar en galería (Android 10+)
-fun saveToGallery(context: Context, image: ImageBitmap) {
-    val bitmap = image.asAndroidBitmap()
-    val filename = "captura_${System.currentTimeMillis()}.png"
-
-    val contentValues = ContentValues().apply {
-        put(MediaStore.Images.Media.DISPLAY_NAME, filename)
-        put(MediaStore.Images.Media.MIME_TYPE, "image/png")
-        put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/RuletaApp")
-    }
-
-    val uri = context.contentResolver.insert(
-        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-        contentValues
-    ) ?: return
-
-    context.contentResolver.openOutputStream(uri)?.let { out ->
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
-    }
-}
 
 
 /**
