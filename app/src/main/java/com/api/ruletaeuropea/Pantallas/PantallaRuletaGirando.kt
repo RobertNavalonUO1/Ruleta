@@ -60,12 +60,14 @@ import androidx.compose.material3.SnackbarHostState
 import kotlinx.coroutines.launch
 import com.api.ruletaeuropea.logica.saveToGallery
 import com.api.ruletaeuropea.logica.addCalendarEvent
+import com.api.ruletaeuropea.logica.mostrarNotificacionVictoria
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.widget.Toast
 import android.Manifest
 import androidx.compose.runtime.Composable
-
+import androidx.core.content.ContextCompat
+import android.content.pm.PackageManager
 
 // Colores y tamaños comunes (evitar magic numbers)
 private val Gold = Color(0xFFFFD700)
@@ -341,13 +343,32 @@ private fun ResultadoSection(
         }
     )
 
-    //Guardar victoria en calendario
+    // Guardar victoria en calendario
     LaunchedEffect(pagoTotal) {
         if (pagoTotal > 0) {
             calendarPermissionLauncher.launch(Manifest.permission.WRITE_CALENDAR)
         }
     }
 
+    // Pedir permiso para enviar notificaciones
+    LaunchedEffect(pagoTotal) {
+        if (pagoTotal > 0) {
+            val permiso = Manifest.permission.WRITE_CALENDAR
+            val permisoConcedido = ContextCompat.checkSelfPermission(context, permiso) == PackageManager.PERMISSION_GRANTED
+
+            if (permisoConcedido) {
+                addCalendarEvent(context, "Roulette: Victory!", "You won $pagoTotal coins")
+            } else {
+                calendarPermissionLauncher.launch(permiso)
+            }
+
+            // Enviar la notificación
+            mostrarNotificacionVictoria(context, pagoTotal)
+        }
+    }
+
+
+    // Mostrar el resultado
     Box(
         modifier = Modifier
             .fillMaxSize()

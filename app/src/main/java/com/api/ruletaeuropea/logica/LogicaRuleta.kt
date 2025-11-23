@@ -1,16 +1,27 @@
 package com.api.ruletaeuropea.logica
 
-import com.api.ruletaeuropea.Modelo.Apuesta
-import com.api.ruletaeuropea.data.entity.Jugador
-import com.api.ruletaeuropea.data.model.CategoriaApostada
-import com.api.ruletaeuropea.data.entity.Apuesta as ApuestaEntity
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.ContentValues
 import android.content.Context
-import android.graphics.Bitmap
+import android.content.pm.PackageManager
+import android.os.Build
 import android.provider.CalendarContract
 import android.provider.MediaStore
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import com.api.ruletaeuropea.Modelo.Apuesta
+import com.api.ruletaeuropea.data.entity.Jugador
+import com.api.ruletaeuropea.data.model.CategoriaApostada
+import com.api.ruletaeuropea.data.entity.Apuesta as ApuestaEntity
+import android.graphics.Bitmap
+import com.api.ruletaeuropea.R
+import android.os.Handler
+import android.os.Looper
+
+
 
 
 // Números rojos en ruleta europea
@@ -68,6 +79,7 @@ fun tipoApuesta(numero: Int): String {
     }
 }
 
+// Construye entidad Apuesta
 fun construirApuestaCompleta(
     apuestaUI: Apuesta,
     jugador: Jugador,
@@ -98,8 +110,14 @@ fun construirApuestaCompleta(
     )
 }
 
-// Función para guardar en galería (Android 10+)
+
+// Guardar imagen en galería (Android 10+ seguro)
 fun saveToGallery(context: Context, image: ImageBitmap) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
+        context.checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        != PackageManager.PERMISSION_GRANTED
+    ) return // permiso no concedido
+
     val bitmap = image.asAndroidBitmap()
     val filename = "captura_${System.currentTimeMillis()}.png"
 
@@ -114,17 +132,25 @@ fun saveToGallery(context: Context, image: ImageBitmap) {
         contentValues
     ) ?: return
 
-    context.contentResolver.openOutputStream(uri)?.let { out ->
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+    try {
+        context.contentResolver.openOutputStream(uri)?.use { out ->
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+        }
+    } catch (e: SecurityException) {
+        e.printStackTrace()
     }
 }
 
-//Insertar evento en el calendario del dispositivo.
-fun addCalendarEvent(context: Context, title: String, description: String) {
-    val calID: Long = 1
 
+// Insertar evento en calendario seguro
+fun addCalendarEvent(context: Context, title: String, description: String) {
+    if (context.checkSelfPermission(android.Manifest.permission.WRITE_CALENDAR)
+        != PackageManager.PERMISSION_GRANTED
+    ) return
+
+    val calID: Long = 1
     val startMillis = System.currentTimeMillis()
-    val endMillis = startMillis + 60 * 60 * 1000 // duración 1 hora
+    val endMillis = startMillis + 60 * 60 * 1000
 
     val values = ContentValues().apply {
         put(CalendarContract.Events.DTSTART, startMillis)
@@ -135,7 +161,46 @@ fun addCalendarEvent(context: Context, title: String, description: String) {
         put(CalendarContract.Events.EVENT_TIMEZONE, "Europe/Madrid")
     }
 
-    context.contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
+    try {
+        context.contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
+    } catch (e: SecurityException) {
+        e.printStackTrace()
+    }
+}
+
+// Mostrar notificación victoria seguro
+fun mostrarNotificacionVictoria(context: Context, pagoTotal: Int) {
+    val channelId = "victory_channel"
+    val channelName = "Victory Notifications"
+    val notificationId = System.currentTimeMillis().toInt()
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val channel = NotificationChannel(
+            channelId,
+            channelName,
+            NotificationManager.IMPORTANCE_DEFAULT
+        ).apply { description = "Notifications when you win the game" }
+
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.createNotificationChannel(channel)
+    }
+
+    val builder = NotificationCompat.Builder(context, channelId)
+        .setSmallIcon(R.drawable.icvictory)
+        .setContentTitle("¡Victory!")
+        .setContentText("You have won $pagoTotal coins")
+        .setPriority(NotificationCompat.PRIORITY_HIGH)
+        .setDefaults(NotificationCompat.DEFAULT_ALL)
+        .setAutoCancel(true)
+
+    // Ejecutar en el hilo principal
+    Handler(Looper.getMainLooper()).post {
+        try {
+            NotificationManagerCompat.from(context).notify(notificationId, builder.build())
+        } catch (e: SecurityException) {
+            e.printStackTrace()
+        }
+    }
 }
 
 
