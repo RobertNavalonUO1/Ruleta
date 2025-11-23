@@ -20,6 +20,16 @@ import android.graphics.Bitmap
 import com.api.ruletaeuropea.R
 import android.os.Handler
 import android.os.Looper
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import androidx.core.content.ContextCompat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import android.util.Log
+import com.api.ruletaeuropea.data.entity.Ubicacion
+import com.api.ruletaeuropea.data.db.RuletaDatabase
+
 
 
 
@@ -203,4 +213,49 @@ fun mostrarNotificacionVictoria(context: Context, pagoTotal: Int) {
     }
 }
 
+// Obtener y guardar Ubicación
+fun obtenerUbicacion(context: Context) {
+    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
+    // Comprobar permiso
+    if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION)
+        != PackageManager.PERMISSION_GRANTED) {
+        Log.d("UbicacionHelper", "No se tiene permiso de ubicación")
+        return
+    }
+
+    // Intentar obtener la última ubicación conocida primero
+    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+        if (location != null) {
+            Log.d("UbicacionHelper", "Ubicación obtenida (lastLocation): $location")
+            val ubicacion = Ubicacion(latitude = location.latitude, longitude = location.longitude)
+            CoroutineScope(Dispatchers.IO).launch {
+                RuletaDatabase.getDatabase(context).ubicacionDao().insert(ubicacion)
+                Log.d("UbicacionHelper", "Ubicación guardada en la DB")
+            }
+        } else {
+            Log.d("UbicacionHelper", "lastLocation es null, intentando getCurrentLocation...")
+
+            // Si lastLocation es null, usar getCurrentLocation como fallback
+            fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                .addOnSuccessListener { currentLocation ->
+                    if (currentLocation != null) {
+                        Log.d("UbicacionHelper", "Ubicación obtenida (currentLocation): $currentLocation")
+                        val ubicacion = Ubicacion(latitude = currentLocation.latitude, longitude = currentLocation.longitude)
+                        CoroutineScope(Dispatchers.IO).launch {
+                            RuletaDatabase.getDatabase(context).ubicacionDao().insert(ubicacion)
+                            Log.d("UbicacionHelper", "Ubicación guardada en la DB")
+                        }
+                    } else {
+                        Log.d("UbicacionHelper", "currentLocation es null")
+                    }
+                }
+                .addOnFailureListener {
+                    Log.e("UbicacionHelper", "Error obteniendo currentLocation", it)
+                }
+        }
+    }.addOnFailureListener {
+        Log.e("UbicacionHelper", "Error obteniendo lastLocation", it)
+    }
+}
 

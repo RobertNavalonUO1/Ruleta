@@ -21,14 +21,70 @@ import com.api.ruletaeuropea.data.entity.Jugador
 import com.api.ruletaeuropea.Modelo.Apuesta
 import com.api.ruletaeuropea.navegacion.AppNavigation
 import android.os.Bundle
+import com.api.ruletaeuropea.data.entity.Ubicacion
+import com.api.ruletaeuropea.data.db.RuletaDatabase
+import com.google.android.gms.location.LocationServices
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import android.Manifest
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import com.api.ruletaeuropea.logica.obtenerUbicacion
+
+
 
 class MainActivity : ComponentActivity() {
 
     private var isMuted = true
+    private val LOCATION_PERMISSION_REQUEST_CODE = 2001
+
 
     companion object {
         const val REQUEST_CODE_PICK_AUDIO = 1001
     }
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE &&
+            grantResults.isNotEmpty() &&
+            grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            obtenerUbicacion(this)
+        }
+    }
+
+    private fun getLastLocationAndSave() {
+        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+        // Comprobamos permiso antes de acceder a la ubicación
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED) {
+            // Si no hay permiso, salimos o pedimos de nuevo
+            return
+        }
+
+        try {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                if (location != null) {
+                    val lat = location.latitude
+                    val lon = location.longitude
+                    val ubicacion = Ubicacion(latitude = lat, longitude = lon)
+
+                    // Guardamos en la base de datos con Coroutines
+                    CoroutineScope(Dispatchers.IO).launch {
+                        RuletaDatabase.getDatabase(this@MainActivity).ubicacionDao().insert(ubicacion)
+                    }
+                }
+            }
+        } catch (e: SecurityException) {
+            e.printStackTrace()
+        }
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,6 +92,17 @@ class MainActivity : ComponentActivity() {
         // Iniciar el servicio al arrancar la app
         val serviceIntent = Intent(this, MusicService::class.java)
         startService(serviceIntent)
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                LOCATION_PERMISSION_REQUEST_CODE
+            )
+        } else {
+            obtenerUbicacion(this)
+        }
 
         setContent {
             MaterialTheme {
