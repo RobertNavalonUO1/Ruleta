@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.api.ruletaeuropea.data.entity.Jugador
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.runtime.LaunchedEffect
 import com.api.ruletaeuropea.R
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -56,9 +55,6 @@ fun PantallaMenu(
     val scope = rememberCoroutineScope()
 
     // Estados persistentes
-    val limitesIndex = rememberSaveable { mutableStateOf(1) } // Estándar por defecto
-    val velocidadIndex = rememberSaveable { mutableStateOf(1) } // Normal por defecto
-    val isDark = rememberSaveable { mutableStateOf(false) }
     val showReglas = rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
 
@@ -242,8 +238,6 @@ fun PantallaMenu(
                 context.startService(intent)
             }
         }
-
-        val context = LocalContext.current
 
         // Botón Info
         OutlinedButton(

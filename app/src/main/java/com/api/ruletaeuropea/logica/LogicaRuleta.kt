@@ -8,8 +8,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.CalendarContract
 import android.provider.MediaStore
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.api.ruletaeuropea.Modelo.Apuesta
@@ -26,9 +24,12 @@ import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import android.util.Log
 import com.api.ruletaeuropea.data.entity.Ubicacion
 import com.api.ruletaeuropea.data.db.RuletaDatabase
+import java.io.File
+import java.io.FileOutputStream
+import android.os.Environment
+
 
 
 
@@ -122,34 +123,28 @@ fun construirApuestaCompleta(
 
 
 // Guardar imagen en galería (Android 10+ seguro)
-fun saveToGallery(context: Context, image: ImageBitmap) {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
-        context.checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
-        != PackageManager.PERMISSION_GRANTED
-    ) return // permiso no concedido
-
-    val bitmap = image.asAndroidBitmap()
-    val filename = "captura_${System.currentTimeMillis()}.png"
-
+fun saveToGallery(context: Context, bitmap: Bitmap) {
+    val filename = "screenshot_${System.currentTimeMillis()}.jpg"
     val contentValues = ContentValues().apply {
         put(MediaStore.Images.Media.DISPLAY_NAME, filename)
-        put(MediaStore.Images.Media.MIME_TYPE, "image/png")
-        put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/RuletaApp")
+        put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+        put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Screenshots")
+        put(MediaStore.Images.Media.IS_PENDING, 1)
     }
 
-    val uri = context.contentResolver.insert(
-        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-        contentValues
-    ) ?: return
+    val uri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
 
-    try {
+    uri?.let {
         context.contentResolver.openOutputStream(uri)?.use { out ->
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 85, out)
         }
-    } catch (e: SecurityException) {
-        e.printStackTrace()
+        contentValues.clear()
+        contentValues.put(MediaStore.Images.Media.IS_PENDING, 0)
+        context.contentResolver.update(uri, contentValues, null, null)
     }
 }
+
+
 
 
 // Insertar evento en calendario seguro

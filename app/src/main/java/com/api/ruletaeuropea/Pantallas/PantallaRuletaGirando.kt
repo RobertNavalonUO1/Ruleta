@@ -30,7 +30,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.api.ruletaeuropea.Modelo.Apuesta
-import com.api.ruletaeuropea.R
 import com.api.ruletaeuropea.componentes.CoinsDisplay
 import com.api.ruletaeuropea.data.entity.Jugador
 import com.api.ruletaeuropea.logica.calcularPago
@@ -58,7 +57,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import kotlinx.coroutines.launch
-import com.api.ruletaeuropea.logica.saveToGallery
 import com.api.ruletaeuropea.logica.addCalendarEvent
 import com.api.ruletaeuropea.logica.mostrarNotificacionVictoria
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -68,6 +66,14 @@ import android.Manifest
 import androidx.compose.runtime.Composable
 import androidx.core.content.ContextCompat
 import android.content.pm.PackageManager
+import android.net.Uri
+import com.api.ruletaeuropea.R
+import android.graphics.Bitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+
+
+
+
 
 // Colores y tamaños comunes (evitar magic numbers)
 private val Gold = Color(0xFFFFD700)
@@ -319,7 +325,6 @@ private fun ResultadoSection(
                 )
             }
         }
-
         onActualizarSaldo(pagoTotal)
         lastPersistedResult = resultado
     }
@@ -366,7 +371,6 @@ private fun ResultadoSection(
             mostrarNotificacionVictoria(context, pagoTotal)
         }
     }
-
 
     // Mostrar el resultado
     Box(
@@ -475,23 +479,34 @@ private fun ResultadoSection(
             ) { Text(text = "Play Again", fontWeight = FontWeight.SemiBold) }
         }
 
-        // Icono de captura de pantalla
+        // Launcher para seleccionar ubicación del archivo
+        val createFileLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.CreateDocument("image/jpeg")
+        ) { uri: Uri? ->
+            uri?.let { selectedUri ->
+                coroutineScope.launch {
+                    context.contentResolver.openOutputStream(selectedUri)?.use { out ->
+                        screenshotBitmap?.let { bitmap ->
+                            bitmap.asAndroidBitmap().compress(Bitmap.CompressFormat.JPEG, 85, out)
+                        }
+                    }
+                    screenshotBitmap = null
+                    snackbarHostState.showSnackbar("Screenshot saved!")
+                }
+            }
+        }
+
+        // Estado de la captura de pantalla
+        var screenshotBitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+        // Botón de captura
         IconButton(
             onClick = {
-                val bitmap = view.drawToBitmap()
-                screenshotBitmap = bitmap.asImageBitmap()
+                // Capturamos la vista en Bitmap
+                screenshotBitmap = view.drawToBitmap()
 
-                // Guardar y mostrar snackbar
-                screenshotBitmap?.let { img ->
-                    saveToGallery(context, img)
-                    screenshotBitmap = null
-                    coroutineScope.launch {
-                        snackbarHostState.showSnackbar(
-                            message = "Screenshot saved!",
-                            duration = SnackbarDuration.Short
-                        )
-                    }
-                }
+                // Abrimos el selector de ubicación
+                createFileLauncher.launch("screenshot_${System.currentTimeMillis()}.jpg")
             },
             modifier = Modifier
                 .align(Alignment.BottomStart)
@@ -503,6 +518,10 @@ private fun ResultadoSection(
                 tint = Color.White
             )
         }
+
+
+
+
 
         // SnackbarHost
         SnackbarHost(
