@@ -220,42 +220,31 @@ fun obtenerUbicacion(context: Context) {
     // Comprobar permiso
     if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION)
         != PackageManager.PERMISSION_GRANTED) {
-        Log.d("UbicacionHelper", "No se tiene permiso de ubicación")
         return
     }
 
     // Intentar obtener la última ubicación conocida primero
     fusedLocationClient.lastLocation.addOnSuccessListener { location ->
         if (location != null) {
-            Log.d("UbicacionHelper", "Ubicación obtenida (lastLocation): $location")
             val ubicacion = Ubicacion(latitude = location.latitude, longitude = location.longitude)
             CoroutineScope(Dispatchers.IO).launch {
                 RuletaDatabase.getDatabase(context).ubicacionDao().insert(ubicacion)
-                Log.d("UbicacionHelper", "Ubicación guardada en la DB")
             }
         } else {
-            Log.d("UbicacionHelper", "lastLocation es null, intentando getCurrentLocation...")
-
             // Si lastLocation es null, usar getCurrentLocation como fallback
             fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
                 .addOnSuccessListener { currentLocation ->
                     if (currentLocation != null) {
-                        Log.d("UbicacionHelper", "Ubicación obtenida (currentLocation): $currentLocation")
-                        val ubicacion = Ubicacion(latitude = currentLocation.latitude, longitude = currentLocation.longitude)
+                        val ubicacion = Ubicacion(
+                            latitude = currentLocation.latitude,
+                            longitude = currentLocation.longitude
+                        )
                         CoroutineScope(Dispatchers.IO).launch {
                             RuletaDatabase.getDatabase(context).ubicacionDao().insert(ubicacion)
-                            Log.d("UbicacionHelper", "Ubicación guardada en la DB")
                         }
-                    } else {
-                        Log.d("UbicacionHelper", "currentLocation es null")
                     }
                 }
-                .addOnFailureListener {
-                    Log.e("UbicacionHelper", "Error obteniendo currentLocation", it)
-                }
         }
-    }.addOnFailureListener {
-        Log.e("UbicacionHelper", "Error obteniendo lastLocation", it)
     }
 }
 

@@ -62,18 +62,6 @@ fun PantallaMenu(
     val showReglas = rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
 
-    // Launcher para seleccionar archivo MP3
-    val pickAudioLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri: Uri? ->
-        uri?.let {
-            val intent = Intent(context, MusicService::class.java).apply {
-                putExtra("action", "SET_MUSIC")
-                putExtra("audioUri", uri.toString())
-            }
-            context.startService(intent)
-        }
-    }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -253,22 +241,6 @@ fun PantallaMenu(
                 }
                 context.startService(intent)
             }
-        }
-
-        // Botón Musica arriba derecha (Abre selector de audio)
-        IconButton(
-            onClick = {
-                pickAudioLauncher.launch(arrayOf("audio/mpeg"))
-            },
-            modifier = Modifier
-                .align(Alignment.TopEnd) // Arriba a la derecha del Box padre
-                .padding(end = 45.dp, top = 0.dp) // Ajusta separación respecto al botón de volumen
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.icselectmusic), // tu ícono de música
-                contentDescription = "Cambiar música",
-                tint = Color.White // o cambia según fondo
-            )
         }
 
         // Botón Salir separado, abajo derecha
