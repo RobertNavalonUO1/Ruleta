@@ -17,6 +17,9 @@ import com.api.ruletaeuropea.pantallas.PantallaMenu
 import com.api.ruletaeuropea.pantallas.PantallaRanking
 import com.api.ruletaeuropea.pantallas.PantallaHistorial
 import com.api.ruletaeuropea.pantallas.PantallaRegister
+import com.api.ruletaeuropea.pantallas.PantallaInfo
+
+
 
 @Composable
 fun AppNavigation(
@@ -78,6 +81,8 @@ fun AppNavigation(
             // Pantalla vacía o de error
             PantallaRegister(navController = navController, jugador = jugador)
         }
+
+        composable("info") { PantallaInfo(navController) }
     }
 }
 

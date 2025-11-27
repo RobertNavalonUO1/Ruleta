@@ -243,7 +243,23 @@ fun PantallaMenu(
             }
         }
 
-        // Botón Salir separado, abajo derecha
+        val context = LocalContext.current
+
+        // Botón Info
+        OutlinedButton(
+            onClick = {
+                navController.navigate("info")
+            },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 24.dp, end = 120.dp)
+                .height(48.dp)
+        ) {
+            Text("Info")
+        }
+
+
+        // Botón Salir
         OutlinedButton(
             onClick = {
                 jugador.value = Jugador(NombreJugador = "Guest", NumMonedas = 1000)
