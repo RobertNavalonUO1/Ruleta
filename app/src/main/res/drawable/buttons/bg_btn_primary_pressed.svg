@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="56" viewBox="0 0 240 56" fill="none">
+  <defs>
+    <linearGradient id="grad_primary_pressed" x1="0" y1="0" x2="0" y2="56">
+      <stop offset="0%" stop-color="#E6C65F"/>
+      <stop offset="100%" stop-color="#BFA100"/>
+    </linearGradient>
+  </defs>
+  <rect width="240" height="56" rx="28" fill="url(#grad_primary_pressed)"/>
+</svg>

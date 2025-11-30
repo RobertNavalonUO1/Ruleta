@@ -1,5 +1,6 @@
 package com.api.ruletaeuropea.pantallas
 
+import android.media.MediaPlayer
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -42,6 +43,9 @@ fun PantallaApuestas(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
+    val sonidoNuevaFicha: MediaPlayer = remember { MediaPlayer.create(context, R.raw.fichasobremesa) }
+    val sonidoSobreFicha: MediaPlayer = remember { MediaPlayer.create(context, R.raw.fichasobreficha) }
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -79,6 +83,16 @@ fun PantallaApuestas(
                     onApuestaRealizada = { numero ->
                         val saldo = jugador.value.NumMonedas
                         if (saldo >= monedaSeleccionada) {
+                            // Comprobar si ya hay fichas en la casilla
+                            val casillaOcupada = apuestas.value.any { it.numero == numero }
+
+                            // Reproducir el sonido correspondiente
+                            if (casillaOcupada) {
+                                sonidoSobreFicha.start()
+                            } else {
+                                sonidoNuevaFicha.start()
+                            }
+
                             // Actualizar numMonedas en la base de datos.
                             scope.launch {
                                 withContext(Dispatchers.IO) {
@@ -166,6 +180,13 @@ fun PantallaApuestas(
 
 
             }
+        }
+    }
+    // Liberar recursos al salir del Composable
+    DisposableEffect(Unit) {
+        onDispose {
+            sonidoNuevaFicha.release()
+            sonidoSobreFicha.release()
         }
     }
 }

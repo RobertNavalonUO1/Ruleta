@@ -8,11 +8,21 @@ import android.util.Log
 import com.api.ruletaeuropea.R
 import android.net.Uri
 
+<<<<<<< HEAD
+=======
+
+
+
+
+>>>>>>> Andrea2
 class MusicService : Service() {
 
     private lateinit var player: MediaPlayer
     private var isMuted = false
+<<<<<<< HEAD
     private var wasPlayingBeforeBackground = false
+=======
+>>>>>>> Andrea2
 
     override fun onCreate() {
         super.onCreate()
@@ -28,7 +38,11 @@ class MusicService : Service() {
 
         when (action) {
 
+<<<<<<< HEAD
             "PLAY", "RESUME" -> {
+=======
+            "PLAY" -> {
+>>>>>>> Andrea2
                 try {
                     if (!player.isPlaying) {
                         player.start()
@@ -42,7 +56,11 @@ class MusicService : Service() {
                 }
             }
 
+<<<<<<< HEAD
             "STOP", "PAUSE" -> {
+=======
+            "STOP" -> {
+>>>>>>> Andrea2
                 if (player.isPlaying) {
                     player.pause()
                     Log.d("MusicService", "Música pausada")
@@ -69,6 +87,7 @@ class MusicService : Service() {
                     }
                 }
             }
+<<<<<<< HEAD
 
             "PAUSE_BG" -> {
                 if (this::player.isInitialized && player.isPlaying) {
@@ -89,6 +108,8 @@ class MusicService : Service() {
                 }
                 wasPlayingBeforeBackground = false
             }
+=======
+>>>>>>> Andrea2
         }
 
         return START_STICKY

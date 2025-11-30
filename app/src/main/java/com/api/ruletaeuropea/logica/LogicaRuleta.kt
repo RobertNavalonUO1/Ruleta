@@ -1,9 +1,39 @@
 package com.api.ruletaeuropea.logica
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.ContentValues
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
+import android.provider.CalendarContract
+import android.provider.MediaStore
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import com.api.ruletaeuropea.Modelo.Apuesta
 import com.api.ruletaeuropea.data.entity.Jugador
 import com.api.ruletaeuropea.data.model.CategoriaApostada
 import com.api.ruletaeuropea.data.entity.Apuesta as ApuestaEntity
+import android.graphics.Bitmap
+import com.api.ruletaeuropea.R
+import android.os.Handler
+import android.os.Looper
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import androidx.core.content.ContextCompat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import com.api.ruletaeuropea.data.entity.Ubicacion
+import com.api.ruletaeuropea.data.db.RuletaDatabase
+import java.io.File
+import java.io.FileOutputStream
+import android.os.Environment
+
+
+
+
+
 
 // Números rojos en ruleta europea
 val RedNumbers = setOf(
@@ -60,6 +90,7 @@ fun tipoApuesta(numero: Int): String {
     }
 }
 
+// Construye entidad Apuesta
 fun construirApuestaCompleta(
     apuestaUI: Apuesta,
     jugador: Jugador,
@@ -90,4 +121,125 @@ fun construirApuestaCompleta(
     )
 }
 
+
+// Guardar imagen en galería (Android 10+ seguro)
+fun saveToGallery(context: Context, bitmap: Bitmap) {
+    val filename = "screenshot_${System.currentTimeMillis()}.jpg"
+    val contentValues = ContentValues().apply {
+        put(MediaStore.Images.Media.DISPLAY_NAME, filename)
+        put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+        put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Screenshots")
+        put(MediaStore.Images.Media.IS_PENDING, 1)
+    }
+
+    val uri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+
+    uri?.let {
+        context.contentResolver.openOutputStream(uri)?.use { out ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 85, out)
+        }
+        contentValues.clear()
+        contentValues.put(MediaStore.Images.Media.IS_PENDING, 0)
+        context.contentResolver.update(uri, contentValues, null, null)
+    }
+}
+
+
+
+
+// Insertar evento en calendario seguro
+fun addCalendarEvent(context: Context, title: String, description: String) {
+    if (context.checkSelfPermission(android.Manifest.permission.WRITE_CALENDAR)
+        != PackageManager.PERMISSION_GRANTED
+    ) return
+
+    val calID: Long = 1
+    val startMillis = System.currentTimeMillis()
+    val endMillis = startMillis + 60 * 60 * 1000
+
+    val values = ContentValues().apply {
+        put(CalendarContract.Events.DTSTART, startMillis)
+        put(CalendarContract.Events.DTEND, endMillis)
+        put(CalendarContract.Events.TITLE, title)
+        put(CalendarContract.Events.DESCRIPTION, description)
+        put(CalendarContract.Events.CALENDAR_ID, calID)
+        put(CalendarContract.Events.EVENT_TIMEZONE, "Europe/Madrid")
+    }
+
+    try {
+        context.contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
+    } catch (e: SecurityException) {
+        e.printStackTrace()
+    }
+}
+
+// Mostrar notificación victoria seguro
+fun mostrarNotificacionVictoria(context: Context, pagoTotal: Int) {
+    val channelId = "victory_channel"
+    val channelName = "Victory Notifications"
+    val notificationId = System.currentTimeMillis().toInt()
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val channel = NotificationChannel(
+            channelId,
+            channelName,
+            NotificationManager.IMPORTANCE_DEFAULT
+        ).apply { description = "Notifications when you win the game" }
+
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.createNotificationChannel(channel)
+    }
+
+    val builder = NotificationCompat.Builder(context, channelId)
+        .setSmallIcon(R.drawable.icvictory)
+        .setContentTitle("¡Victory!")
+        .setContentText("You have won $pagoTotal coins")
+        .setPriority(NotificationCompat.PRIORITY_HIGH)
+        .setDefaults(NotificationCompat.DEFAULT_ALL)
+        .setAutoCancel(true)
+
+    // Ejecutar en el hilo principal
+    Handler(Looper.getMainLooper()).post {
+        try {
+            NotificationManagerCompat.from(context).notify(notificationId, builder.build())
+        } catch (e: SecurityException) {
+            e.printStackTrace()
+        }
+    }
+}
+
+// Obtener y guardar Ubicación
+fun obtenerUbicacion(context: Context) {
+    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
+    // Comprobar permiso
+    if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION)
+        != PackageManager.PERMISSION_GRANTED) {
+        return
+    }
+
+    // Intentar obtener la última ubicación conocida primero
+    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+        if (location != null) {
+            val ubicacion = Ubicacion(latitude = location.latitude, longitude = location.longitude)
+            CoroutineScope(Dispatchers.IO).launch {
+                RuletaDatabase.getDatabase(context).ubicacionDao().insert(ubicacion)
+            }
+        } else {
+            // Si lastLocation es null, usar getCurrentLocation como fallback
+            fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                .addOnSuccessListener { currentLocation ->
+                    if (currentLocation != null) {
+                        val ubicacion = Ubicacion(
+                            latitude = currentLocation.latitude,
+                            longitude = currentLocation.longitude
+                        )
+                        CoroutineScope(Dispatchers.IO).launch {
+                            RuletaDatabase.getDatabase(context).ubicacionDao().insert(ubicacion)
+                        }
+                    }
+                }
+        }
+    }
+}
 

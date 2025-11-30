@@ -5,6 +5,8 @@ import androidx.compose.runtime.MutableState
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.api.ruletaeuropea.pantallas.PantallaRuletaGirando
 import com.api.ruletaeuropea.pantallas.PantallaApuestas
 import com.api.ruletaeuropea.pantallas.PantallaIntro
@@ -14,13 +16,22 @@ import com.api.ruletaeuropea.pantallas.PantallaLogin
 import com.api.ruletaeuropea.pantallas.PantallaMenu
 import com.api.ruletaeuropea.pantallas.PantallaRanking
 import com.api.ruletaeuropea.pantallas.PantallaHistorial
+import com.api.ruletaeuropea.pantallas.PantallaRegister
+import com.api.ruletaeuropea.pantallas.PantallaInfo
+
+
 
 @Composable
 fun AppNavigation(
     navController: NavHostController,
     jugador: MutableState<Jugador>,
-    apuestas: MutableState<List<Apuesta>>
+    apuestas: MutableState<List<Apuesta>>,
+    // startDestinationOverride permite a la Activity indicar una ruta distinta (p. ej. "ruleta")
+    startDestinationOverride: String? = null
 ) {
+    // Si la Activity pasa una ruta, úsala; si no, usar "intro"
+    val start = startDestinationOverride ?: "intro"
+
     NavHost(navController = navController, startDestination = "intro") {
 
         composable("intro") {
@@ -54,7 +65,6 @@ fun AppNavigation(
             )
         }
 
-
         composable("ruleta") {
             PantallaRuletaGirando(
                 navController = navController,
@@ -67,6 +77,12 @@ fun AppNavigation(
                 }
             )
         }
+        composable("register") {
+            // Pantalla vacía o de error
+            PantallaRegister(navController = navController, jugador = jugador)
+        }
+
+        composable("info") { PantallaInfo(navController) }
     }
 }
 
