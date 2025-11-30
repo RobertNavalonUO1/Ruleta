@@ -34,6 +34,20 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onPause() {
+        super.onPause()
+        Intent(this, MusicService::class.java).also {
+            it.putExtra("action", "PAUSE_BG")
+            startService(it)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Intent(this, MusicService::class.java).also {
+            it.putExtra("action", "RESUME_BG")
+            startService(it)
+        }
+    }
 }
-
-
