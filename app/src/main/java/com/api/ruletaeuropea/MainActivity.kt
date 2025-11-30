@@ -90,7 +90,23 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
 
+        val intent = Intent(this, MusicService::class.java).apply {
+            putExtra("action", if (isMuted) "STOP" else "PLAY")
+        }
+        startService(intent)
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        Intent(this, MusicService::class.java).also {
+            it.putExtra("action", "STOP")
+            startService(it)
+        }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -133,6 +149,8 @@ class MainActivity : ComponentActivity() {
                     IconButton(
                         onClick = {
                             mutedState = !mutedState
+                            // Sincroniza el estado con la Activity para que onResume lo respete
+                            this@MainActivity.isMuted = mutedState
                             val action = if (mutedState) "STOP" else "PLAY"
                             Intent(this@MainActivity, MusicService::class.java).also {
                                 it.putExtra("action", action)
@@ -200,5 +218,3 @@ class MainActivity : ComponentActivity() {
 
     }
 }
-
-
