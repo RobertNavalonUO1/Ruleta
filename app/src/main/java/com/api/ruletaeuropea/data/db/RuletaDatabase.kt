@@ -32,7 +32,7 @@ import androidx.room.Room
         Ranking::class,
         Ubicacion::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -54,7 +54,9 @@ abstract class RuletaDatabase : RoomDatabase() {
                     context.applicationContext,
                     RuletaDatabase::class.java,
                     "ruleta_database"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }

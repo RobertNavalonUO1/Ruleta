@@ -34,9 +34,13 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.Modifier
+import android.util.Log
 
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+
+
+
 
 @Composable
 fun PantallaLogin(
@@ -90,8 +94,10 @@ fun PantallaLogin(
                         }
                     }
                 } catch (e: Exception) {
-                    mensajeError.value = "An unexpected error occurred. Please try again."
-                } finally {
+                    Log.e("LOGIN", "Error durante login", e)
+                    mensajeError.value = e.message ?: "Unexpected error occurred"
+                }
+                finally {
                     isLoading.value = false
                 }
             }
