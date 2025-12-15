@@ -11,7 +11,6 @@ import android.provider.MediaStore
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.api.ruletaeuropea.Modelo.Apuesta
-import com.api.ruletaeuropea.data.entity.Jugador
 import com.api.ruletaeuropea.data.model.CategoriaApostada
 import com.api.ruletaeuropea.data.entity.Apuesta as ApuestaEntity
 import android.graphics.Bitmap
@@ -26,10 +25,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.api.ruletaeuropea.data.entity.Ubicacion
 import com.api.ruletaeuropea.data.db.RuletaDatabase
-import java.io.File
-import java.io.FileOutputStream
 import android.os.Environment
-
+import com.api.ruletaeuropea.data.entity.Jugador
 
 
 

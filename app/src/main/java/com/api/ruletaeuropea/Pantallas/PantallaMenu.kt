@@ -22,7 +22,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.api.ruletaeuropea.data.entity.Jugador
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import com.api.ruletaeuropea.R
 import androidx.compose.foundation.BorderStroke
@@ -42,6 +41,9 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.ui.platform.LocalContext
 import com.api.ruletaeuropea.MusicService
+import com.api.ruletaeuropea.data.entity.Jugador
+import android.app.Activity
+
 
 
 @Composable
@@ -53,6 +55,8 @@ fun PantallaMenu(
     val snackbarHostState = remember { SnackbarHostState() }
     val haptics = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
+    val authViewModel = remember { AuthViewModel() }
+
 
     // Estados persistentes
     val showReglas = rememberSaveable { mutableStateOf(false) }
@@ -257,6 +261,7 @@ fun PantallaMenu(
         OutlinedButton(
             onClick = {
                 jugador.value = Jugador(NombreJugador = "Guest", NumMonedas = 1000)
+                logout(context as Activity, authViewModel)
                 navController.navigate("login") {
                     popUpTo("menu") { inclusive = true }
                 }
@@ -498,4 +503,13 @@ private fun ToggleTema(isDark: Boolean, onToggle: () -> Unit) {
         Spacer(Modifier.width(8.dp))
         Switch(checked = isDark, onCheckedChange = { onToggle() })
     }
+}
+
+fun logout(context: Activity, authViewModel: AuthViewModel) {
+    // Cerrar sesión en Firebase
+    authViewModel.signOut()
+
+    // Cerrar sesión en Google
+    val googleSignInClient = getGoogleSignInClient(context)
+    googleSignInClient.signOut()
 }

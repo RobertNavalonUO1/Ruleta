@@ -13,13 +13,13 @@ import androidx.room.TypeConverters
 import com.api.ruletaeuropea.data.*
 import com.api.ruletaeuropea.data.entity.Apuesta
 import com.api.ruletaeuropea.data.entity.Historial
-import com.api.ruletaeuropea.data.entity.Jugador
 import com.api.ruletaeuropea.data.entity.Numero
 import com.api.ruletaeuropea.data.entity.Ranking
 import com.api.ruletaeuropea.data.entity.Ruleta
 import com.api.ruletaeuropea.data.entity.Ubicacion
 import android.content.Context
 import androidx.room.Room
+import com.api.ruletaeuropea.data.entity.Jugador
 
 
 @Database(

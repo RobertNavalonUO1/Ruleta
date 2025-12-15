@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "86776186866",
+    "project_id": "ruletaeuropea-bcb84",
+    "storage_bucket": "ruletaeuropea-bcb84.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:86776186866:android:e0a79c50d8bc46ce698d6b",
+        "android_client_info": {
+          "package_name": "com.api.ruletaeuropea"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "86776186866-qotobpejoh8n2ik4p5prv7a77nva25ep.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.api.ruletaeuropea",
+            "certificate_hash": "1efb253fc1e3560d670180a7b7b6b398a8e0fa89"
+          }
+        },
+        {
+          "client_id": "86776186866-dtqi576rroa4pnrcs6mrlnttuqhg74b3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbb3j0QnTTsDjyiNKGVDDP8E1yETaZ9iw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "86776186866-dtqi576rroa4pnrcs6mrlnttuqhg74b3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

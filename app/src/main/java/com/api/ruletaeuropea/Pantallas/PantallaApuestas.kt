@@ -24,13 +24,13 @@ import com.api.ruletaeuropea.Modelo.Apuesta
 import com.api.ruletaeuropea.R
 import com.api.ruletaeuropea.componentes.SelectorMonedas
 import com.api.ruletaeuropea.componentes.CoinsDisplay
-import com.api.ruletaeuropea.data.entity.Jugador
 import com.api.ruletaeuropea.componentes.RuletaGrid as RuletaGridComp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.compose.runtime.rememberCoroutineScope
 import com.api.ruletaeuropea.App
+import com.api.ruletaeuropea.data.entity.Jugador
 
 
 @Composable

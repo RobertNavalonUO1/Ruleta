@@ -17,7 +17,6 @@ import androidx.compose.material3.*
 import android.content.pm.ApplicationInfo
 import android.content.Intent
 import androidx.navigation.compose.rememberNavController
-import com.api.ruletaeuropea.data.entity.Jugador
 import com.api.ruletaeuropea.Modelo.Apuesta
 import com.api.ruletaeuropea.navegacion.AppNavigation
 import android.os.Bundle
@@ -36,6 +35,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.api.ruletaeuropea.logica.obtenerUbicacion
 import androidx.compose.ui.platform.LocalContext
+import com.api.ruletaeuropea.data.entity.Jugador
 
 
 

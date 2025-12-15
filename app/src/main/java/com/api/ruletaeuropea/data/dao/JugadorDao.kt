@@ -1,8 +1,8 @@
 package com.api.ruletaeuropea.data.dao
 
 import androidx.room.*
-import com.api.ruletaeuropea.data.entity.Jugador
 import kotlinx.coroutines.flow.Flow
+import com.api.ruletaeuropea.data.entity.Jugador
 
 @Dao
 interface JugadorDao {

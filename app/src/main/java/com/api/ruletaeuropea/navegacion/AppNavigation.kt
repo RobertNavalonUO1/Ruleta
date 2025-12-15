@@ -5,19 +5,17 @@ import androidx.compose.runtime.MutableState
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.NavType
-import androidx.navigation.navArgument
 import com.api.ruletaeuropea.pantallas.PantallaRuletaGirando
 import com.api.ruletaeuropea.pantallas.PantallaApuestas
 import com.api.ruletaeuropea.pantallas.PantallaIntro
 import com.api.ruletaeuropea.Modelo.Apuesta
-import com.api.ruletaeuropea.data.entity.Jugador
 import com.api.ruletaeuropea.pantallas.PantallaLogin
 import com.api.ruletaeuropea.pantallas.PantallaMenu
 import com.api.ruletaeuropea.pantallas.PantallaRanking
 import com.api.ruletaeuropea.pantallas.PantallaHistorial
 import com.api.ruletaeuropea.pantallas.PantallaRegister
 import com.api.ruletaeuropea.pantallas.PantallaInfo
+import com.api.ruletaeuropea.data.entity.Jugador
 
 
 

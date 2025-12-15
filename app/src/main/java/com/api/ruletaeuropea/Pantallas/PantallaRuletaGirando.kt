@@ -31,7 +31,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.api.ruletaeuropea.Modelo.Apuesta
 import com.api.ruletaeuropea.componentes.CoinsDisplay
-import com.api.ruletaeuropea.data.entity.Jugador
 import com.api.ruletaeuropea.logica.calcularPago
 import com.api.ruletaeuropea.logica.evaluarApuesta
 import com.api.ruletaeuropea.logica.tipoApuesta
@@ -51,7 +50,6 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.drawToBitmap
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.material3.SnackbarDuration
@@ -70,6 +68,7 @@ import android.net.Uri
 import com.api.ruletaeuropea.R
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
+import com.api.ruletaeuropea.data.entity.Jugador
 
 
 
