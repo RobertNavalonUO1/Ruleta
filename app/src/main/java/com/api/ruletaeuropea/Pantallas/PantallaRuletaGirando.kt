@@ -70,6 +70,9 @@ import android.graphics.Bitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import com.api.ruletaeuropea.data.entity.Jugador
 import com.api.ruletaeuropea.data.db.rememberPremioAcumulado
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
+
 
 
 
@@ -319,11 +322,32 @@ private fun ResultadoSection(
     // Guardar que ya persistimos este resultado (sobrevive rotación)
     var lastPersistedResult by rememberSaveable { mutableStateOf<Int?>(null) }
 
+    // Calcula el total perdido para añadirlo al premio acumulado
+    val totalPerdido = remember(resultado, apuestas.value) {
+        apuestas.value
+            .filterNot { evaluarApuesta(it, resultado) }
+            .sumOf { it.valorMoneda }
+    }
+
     // Escrituras a DB una única vez por resultado
     LaunchedEffect(resultado) {
         if (lastPersistedResult == resultado) return@LaunchedEffect
 
         val nuevoSaldo = jugador.NumMonedas + pagoTotal
+
+        // Actualiza el premio acumulado con las fichas perdidas por el jugador actual
+        if (totalPerdido > 0) {
+            val firestore = FirebaseFirestore.getInstance()
+
+            firestore
+                .collection("ruleta")
+                .document("global")
+                .update(
+                    "premioAcumulado",
+                    FieldValue.increment(totalPerdido.toLong())
+                )
+        }
+
 
         withContext(Dispatchers.IO) {
             val daoRuleta = App.database.ruletaDao()
