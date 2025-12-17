@@ -11,7 +11,7 @@ fun rememberPremioAcumulado(): State<Int> {
 
     DisposableEffect(Unit) {
         val listener: ListenerRegistration =
-            firestore.collection("configuracion")
+            firestore.collection("ruleta")
                 .document("global")
                 .addSnapshotListener { snapshot, error ->
                     if (error != null) return@addSnapshotListener

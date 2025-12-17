@@ -69,6 +69,7 @@ import com.api.ruletaeuropea.R
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import com.api.ruletaeuropea.data.entity.Jugador
+import com.api.ruletaeuropea.data.db.rememberPremioAcumulado
 
 
 
@@ -94,8 +95,7 @@ fun PantallaRuletaGirando(
 ) {
     var resultado by rememberSaveable { mutableStateOf<Int?>(null) }
     var mostrarResultado by rememberSaveable { mutableStateOf(false) }
-    val premioAcumulado = remember { mutableStateOf(1220) } //Provisional mientras no se lea de firebase
-
+    val premioAcumulado = rememberPremioAcumulado()
 
     // Simula el giro de la ruleta y el paso a mostrar resultado
     LaunchedEffect(Unit) {

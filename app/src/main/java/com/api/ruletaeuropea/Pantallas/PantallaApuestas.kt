@@ -32,6 +32,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import com.api.ruletaeuropea.App
 import com.api.ruletaeuropea.data.entity.Jugador
 import androidx.compose.material3.Text
+import com.api.ruletaeuropea.data.db.rememberPremioAcumulado
 
 
 
@@ -47,7 +48,7 @@ fun PantallaApuestas(
 
     val sonidoNuevaFicha: MediaPlayer = remember { MediaPlayer.create(context, R.raw.fichasobremesa) }
     val sonidoSobreFicha: MediaPlayer = remember { MediaPlayer.create(context, R.raw.fichasobreficha) }
-    val premioAcumulado = remember { mutableStateOf(1220) } //Provisional mientras no se lea de firebase
+    val premioAcumulado = rememberPremioAcumulado()
     Box(
         modifier = Modifier.fillMaxSize()
     ) {

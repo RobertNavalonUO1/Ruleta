@@ -43,6 +43,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.api.ruletaeuropea.MusicService
 import com.api.ruletaeuropea.data.entity.Jugador
 import android.app.Activity
+import com.api.ruletaeuropea.data.db.rememberPremioAcumulado
 
 
 
@@ -56,8 +57,7 @@ fun PantallaMenu(
     val haptics = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
     val authViewModel = remember { AuthViewModel() }
-    val premioAcumulado = remember { mutableStateOf(1220) }  //Provisional mientras no se lea de firebase
-
+    val premioAcumulado = rememberPremioAcumulado()
 
     // Estados persistentes
     val showReglas = rememberSaveable { mutableStateOf(false) }
