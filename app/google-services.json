@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "86776186866-ne4ralukpvu7tq45h9v4os298nq28v70.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.api.ruletaeuropea",
+            "certificate_hash": "b6283ada183114591c0995ba08dd9317f6a61adf"
+          }
+        },
+        {
           "client_id": "86776186866-qotobpejoh8n2ik4p5prv7a77nva25ep.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
