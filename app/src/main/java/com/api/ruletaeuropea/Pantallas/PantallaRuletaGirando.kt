@@ -94,6 +94,8 @@ fun PantallaRuletaGirando(
 ) {
     var resultado by rememberSaveable { mutableStateOf<Int?>(null) }
     var mostrarResultado by rememberSaveable { mutableStateOf(false) }
+    val premioAcumulado = remember { mutableStateOf(1220) } //Provisional mientras no se lea de firebase
+
 
     // Simula el giro de la ruleta y el paso a mostrar resultado
     LaunchedEffect(Unit) {
@@ -132,13 +134,34 @@ fun PantallaRuletaGirando(
                 }
         )
 
-        // Monedas arriba a la izquierda
-        CoinsDisplay(
-            cantidad = jugador.NumMonedas,
+        Row(
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(16.dp)
-        )
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Indicador de monedas
+            CoinsDisplay(cantidad = jugador.NumMonedas)
+
+            Spacer(modifier = Modifier.width(12.dp)) // separador horizontal
+
+            // Premio acumulado
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_premio),
+                    contentDescription = "Premio acumulado",
+                    modifier = Modifier.size(50.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "${premioAcumulado.value} €",
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+
 
         // Contenido con transición
         Crossfade(targetState = mostrarResultado, animationSpec = tween(durationMillis = 500)) { showResult ->
@@ -517,10 +540,6 @@ private fun ResultadoSection(
                 tint = Color.White
             )
         }
-
-
-
-
 
         // SnackbarHost
         SnackbarHost(

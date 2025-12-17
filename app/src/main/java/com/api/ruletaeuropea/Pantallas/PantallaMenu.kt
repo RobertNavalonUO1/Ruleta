@@ -56,6 +56,7 @@ fun PantallaMenu(
     val haptics = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
     val authViewModel = remember { AuthViewModel() }
+    val premioAcumulado = remember { mutableStateOf(1220) }  //Provisional mientras no se lea de firebase
 
 
     // Estados persistentes
@@ -122,6 +123,7 @@ fun PantallaMenu(
                                     scope.launch { snackbarHostState.showSnackbar("Abre tienda (pendiente)") }
                                 }
                             )
+
                             Spacer(modifier = Modifier.height(5.dp))
 
                             AccesosRapidos(
@@ -180,6 +182,31 @@ fun PantallaMenu(
                                         scope.launch { snackbarHostState.showSnackbar("Abre tienda (pendiente)") }
                                     }
                                 )
+
+                                // Premio acumulado
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Start,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    // Icono del cofre
+                                    Image(
+                                        painter = painterResource(id = R.drawable.ic_premio),
+                                        contentDescription = "Premio acumulado",
+                                        modifier = Modifier
+                                            .size(50.dp)
+                                            .padding(end = 6.dp)
+                                    )
+
+                                    // Texto del premio acumulado
+                                    Text(
+                                        text = "Premio acumulado: ${premioAcumulado.value} €",
+                                        color = dorado,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+
                                 AccesosRapidos(
                                     onPrivada = {
                                         snackbarHostState.currentSnackbarData?.dismiss()

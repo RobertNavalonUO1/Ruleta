@@ -31,6 +31,8 @@ import kotlinx.coroutines.withContext
 import androidx.compose.runtime.rememberCoroutineScope
 import com.api.ruletaeuropea.App
 import com.api.ruletaeuropea.data.entity.Jugador
+import androidx.compose.material3.Text
+
 
 
 @Composable
@@ -45,7 +47,7 @@ fun PantallaApuestas(
 
     val sonidoNuevaFicha: MediaPlayer = remember { MediaPlayer.create(context, R.raw.fichasobremesa) }
     val sonidoSobreFicha: MediaPlayer = remember { MediaPlayer.create(context, R.raw.fichasobreficha) }
-
+    val premioAcumulado = remember { mutableStateOf(1220) } //Provisional mientras no se lea de firebase
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -135,7 +137,30 @@ fun PantallaApuestas(
                         .padding(start = 4.dp)
                 )
 
-                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.width(26.dp))
+
+                // Premio acumulado
+                val dorado = Color(0xFFFFD700)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_premio),
+                        contentDescription = "Premio acumulado",
+                        modifier = Modifier
+                            .size(50.dp)
+                            .padding(end = 6.dp)
+                    )
+                    Text(
+                        text = "${premioAcumulado.value}",
+                        color = Color.White,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                Spacer(modifier = Modifier.weight(1f)) // empuja los botones a la derecha
+
                 Box(){
                     PlantillaBoton(
                         text = "Exit",
