@@ -107,7 +107,7 @@ fun PantallaApuestas(
                             jugador.value = jugador.value.copy(NumMonedas = saldo - monedaSeleccionada)
 
                             // Guardar apuesta en memoria.
-                            apuestas.value = apuestas.value + Apuesta(numero, monedaSeleccionada)
+                            apuestas.value = apuestas.value + Apuesta(jugador.value, numero, monedaSeleccionada)
                         } else {
                             Toast.makeText(
                                 context,

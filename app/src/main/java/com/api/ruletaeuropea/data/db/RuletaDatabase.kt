@@ -20,6 +20,10 @@ import com.api.ruletaeuropea.data.entity.Ubicacion
 import android.content.Context
 import androidx.room.Room
 import com.api.ruletaeuropea.data.entity.Jugador
+import com.api.ruletaeuropea.data.entity.PremioAcumulado
+import com.api.ruletaeuropea.data.dao.PremioAcumuladoDao
+
+
 
 
 @Database(
@@ -30,9 +34,10 @@ import com.api.ruletaeuropea.data.entity.Jugador
         Apuesta::class,
         Historial::class,
         Ranking::class,
-        Ubicacion::class
+        Ubicacion::class,
+        PremioAcumulado::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -44,6 +49,7 @@ abstract class RuletaDatabase : RoomDatabase() {
     abstract fun historialDao(): HistorialDao
     abstract fun rankingDao(): RankingDao
     abstract fun ubicacionDao(): UbicacionDao
+    abstract fun premioAcumuladoDao(): PremioAcumuladoDao
     companion object {
         @Volatile
         private var INSTANCE: RuletaDatabase? = null

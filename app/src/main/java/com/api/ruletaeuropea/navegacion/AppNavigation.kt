@@ -75,6 +75,7 @@ fun AppNavigation(
                 }
             )
         }
+
         composable("register") {
             // Pantalla vacía o de error
             PantallaRegister(navController = navController, jugador = jugador)

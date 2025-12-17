@@ -610,7 +610,7 @@ private fun ActionButtons(
             modifier = Modifier
                 .weight(1f)
                 .height(56.dp),
-        shape = PillShape,
+            shape = PillShape,
             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
             border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.5f))
         ) {
@@ -618,6 +618,8 @@ private fun ActionButtons(
         }
     }
 }
+
+
 
 /*
 ================ Manual Test Checklist (marcar al revisar PR) ================

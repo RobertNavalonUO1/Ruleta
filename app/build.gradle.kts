@@ -77,9 +77,17 @@ dependencies {
     implementation("com.google.android.gms:play-services-location:21.0.1")
     implementation("com.google.android.gms:play-services-auth:21.0.0")
 
-    // Firebase BOM
-    implementation(platform("com.google.firebase:firebase-bom:32.3.1"))
+    // Firebase BOM (único y consistente)
+    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+
+    // Firebase Auth
     implementation("com.google.firebase:firebase-auth-ktx")
+
+    // Firestore
+    implementation("com.google.firebase:firebase-firestore-ktx")
+
+    // Lifecycle ViewModel para Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
 
     // Instrumented tests
     androidTestImplementation("androidx.test.ext:junit:1.1.6")
