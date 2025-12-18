@@ -52,28 +52,21 @@ import androidx.core.view.drawToBitmap
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import kotlinx.coroutines.launch
-import com.api.ruletaeuropea.logica.addCalendarEvent
-import com.api.ruletaeuropea.logica.mostrarNotificacionVictoria
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import android.widget.Toast
-import android.Manifest
 import androidx.compose.runtime.Composable
-import androidx.core.content.ContextCompat
-import android.content.pm.PackageManager
 import android.net.Uri
 import com.api.ruletaeuropea.R
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import com.api.ruletaeuropea.data.entity.Jugador
-import com.api.ruletaeuropea.data.db.rememberPremioAcumulado
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-
-
+import android.util.Log
+import com.api.ruletaeuropea.data.db.obtenerPremioAcumuladoFirestore
+import com.api.ruletaeuropea.data.db.resetearPremioAcumuladoFirestore
 
 
 
@@ -89,6 +82,9 @@ private val RedNumbers: Set<Int> = setOf(1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 
  * Pantalla de giro de la ruleta con animación y resultado.
  * Mantiene la firma pública, lógica y flujo de navegación existentes.
  */
+
+private const val TAG_RULETA = "RULETA_DEBUG"
+
 @Composable
 fun PantallaRuletaGirando(
     navController: NavController,
@@ -98,10 +94,13 @@ fun PantallaRuletaGirando(
 ) {
     var resultado by rememberSaveable { mutableStateOf<Int?>(null) }
     var mostrarResultado by rememberSaveable { mutableStateOf(false) }
-    val premioAcumulado = rememberPremioAcumulado()
+    val premioAcumulado = remember { mutableStateOf(0) }
+
+
 
     // Simula el giro de la ruleta y el paso a mostrar resultado
     LaunchedEffect(Unit) {
+
         delay(1500) // tiempo de giro
         resultado = (0..36).random()
         delay(2000) // tiempo antes de mostrar resultado
@@ -180,7 +179,8 @@ fun PantallaRuletaGirando(
                         jugador = jugador,
                         apuestas = apuestas,
                         resultado = numeroGanador,
-                        onActualizarSaldo = onActualizarSaldo
+                        onActualizarSaldo = onActualizarSaldo,
+                        premioAcumulado = premioAcumulado
                     )
                 }
             }
@@ -299,7 +299,8 @@ private fun ResultadoSection(
     jugador: Jugador,
     apuestas: MutableState<List<Apuesta>>,
     resultado: Int,
-    onActualizarSaldo: (Int) -> Unit
+    onActualizarSaldo: (Int) -> Unit,
+    premioAcumulado: MutableState<Int>
 ) {
     val context = LocalContext.current
     val view = LocalView.current
@@ -311,16 +312,23 @@ private fun ResultadoSection(
     // Estado para captura de pantalla
     var screenshotBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
 
-    // Calcular apuestas ganadoras y pago total
+    // Calcular apuestas ganadoras
     val apuestasGanadoras = remember(resultado, apuestas.value) {
         apuestas.value.filter { evaluarApuesta(it, resultado) }
     }
+
+    // Calcular pago total
     val pagoTotal = remember(resultado, apuestas.value) {
         calcularPago(apuestas.value, resultado)
     }
 
+    // Comprueba si hay alguna apuesta ganadora
+    val hayGanadores = apuestasGanadoras.isNotEmpty()
+
+
     // Guardar que ya persistimos este resultado (sobrevive rotación)
     var lastPersistedResult by rememberSaveable { mutableStateOf<Int?>(null) }
+
 
     // Calcula el total perdido para añadirlo al premio acumulado
     val totalPerdido = remember(resultado, apuestas.value) {
@@ -331,23 +339,25 @@ private fun ResultadoSection(
 
     // Escrituras a DB una única vez por resultado
     LaunchedEffect(resultado) {
-        if (lastPersistedResult == resultado) return@LaunchedEffect
+        // Evitar procesar el mismo resultado más de una vez
+        if (lastPersistedResult == resultado){
+            return@LaunchedEffect
+        }
 
-        val nuevoSaldo = jugador.NumMonedas + pagoTotal
+        val firestore = FirebaseFirestore.getInstance()
 
-        // Actualiza el premio acumulado con las fichas perdidas por el jugador actual
+        // Recalcular apuestas ganadoras y perdedoras
+        val apuestasGanadoras = apuestas.value.filter { evaluarApuesta(it, resultado) }
+        val pagoTotal = calcularPago(apuestas.value, resultado)
+        val totalPerdido = apuestas.value.filterNot { evaluarApuesta(it, resultado) }.sumOf { it.valorMoneda }
+
+        // Actualizar el premio acumulado global con las apuestas perdidas
         if (totalPerdido > 0) {
-            val firestore = FirebaseFirestore.getInstance()
-
             firestore
                 .collection("ruleta")
                 .document("global")
-                .update(
-                    "premioAcumulado",
-                    FieldValue.increment(totalPerdido.toLong())
-                )
+                .update("premioAcumulado", FieldValue.increment(totalPerdido.toLong()))
         }
-
 
         withContext(Dispatchers.IO) {
             val daoRuleta = App.database.ruletaDao()
@@ -355,9 +365,34 @@ private fun ResultadoSection(
             val daoJugador = App.database.jugadorDao()
             val daoHistorial = App.database.historialDao()
 
+            // Insertar resultado de la ruleta
             val idRuleta = daoRuleta.insertar(Ruleta(NumeroGanador = resultado))
-            daoJugador.actualizar(jugador.copy(NumMonedas = nuevoSaldo))
 
+            // Obtener premio acumulado desde Firestore
+            val premio = obtenerPremioAcumuladoFirestore()
+
+            // Total que el jugador debe recibir esta ronda (pago + premio acumulado)
+            val totalGanadoEstaRonda = pagoTotal + premio
+
+            if (apuestasGanadoras.isNotEmpty()) {
+
+                val saldoInicial = jugador.NumMonedas
+                // Calcular el nuevo saldo del jugador
+                val saldoFinal = jugador.NumMonedas + totalGanadoEstaRonda
+
+                // Actualizar el saldo en la base de datos
+                daoJugador.actualizar(jugador.copy(NumMonedas = saldoFinal))
+
+                // Notificar la UI
+                onActualizarSaldo(totalGanadoEstaRonda)
+
+                // Resetear premio acumulado en memoria y Firestore
+                resetearPremioAcumuladoFirestore()
+                premioAcumulado.value = 0
+
+            }
+
+            // Insertar apuestas y generar historial
             apuestas.value.forEach { apuesta ->
                 val apuestaCompleta = construirApuestaCompleta(apuesta, jugador, resultado, idRuleta)
                 val idApuesta = daoApuesta.insertar(apuestaCompleta)
@@ -366,57 +401,17 @@ private fun ResultadoSection(
                         NombreJugador = jugador.NombreJugador,
                         NumApuesta = idApuesta,
                         Resultado = resultado.toString(),
-                        SaldoDespues = nuevoSaldo
+                        SaldoDespues = jugador.NumMonedas + totalGanadoEstaRonda
                     )
                 )
             }
-        }
-        onActualizarSaldo(pagoTotal)
-        lastPersistedResult = resultado
-    }
 
-    // Pedir permiso para leer y editar el calendario
-    val calendarPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { granted ->
-            if (granted) {
-                addCalendarEvent(context, "Roulette: Victory!", "You won $pagoTotal coins")
-                // Mensaje de confirmación
-                coroutineScope.launch {
-                    snackbarHostState.showSnackbar(
-                        message = "Event added to calendar!",
-                        duration = SnackbarDuration.Short
-                    )
-                }
-            } else {
-                Toast.makeText(context, "Calendar permission denied", Toast.LENGTH_SHORT).show()
-            }
-        }
-    )
-
-    // Guardar victoria en calendario
-    LaunchedEffect(pagoTotal) {
-        if (pagoTotal > 0) {
-            calendarPermissionLauncher.launch(Manifest.permission.WRITE_CALENDAR)
+            // Marcar resultado como persistido para evitar duplicados
+            lastPersistedResult = resultado
         }
     }
 
-    // Pedir permiso para enviar notificaciones
-    LaunchedEffect(pagoTotal) {
-        if (pagoTotal > 0) {
-            val permiso = Manifest.permission.WRITE_CALENDAR
-            val permisoConcedido = ContextCompat.checkSelfPermission(context, permiso) == PackageManager.PERMISSION_GRANTED
 
-            if (permisoConcedido) {
-                addCalendarEvent(context, "Roulette: Victory!", "You won $pagoTotal coins")
-            } else {
-                calendarPermissionLauncher.launch(permiso)
-            }
-
-            // Enviar la notificación
-            mostrarNotificacionVictoria(context, pagoTotal)
-        }
-    }
 
     // Mostrar el resultado
     Box(
@@ -661,7 +656,6 @@ private fun ActionButtons(
         }
     }
 }
-
 
 
 /*
