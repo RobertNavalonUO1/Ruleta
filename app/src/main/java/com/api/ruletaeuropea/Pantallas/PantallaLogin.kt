@@ -105,18 +105,39 @@ fun PantallaLogin(
                 authViewModel.firebaseAuthWithGoogle(
                     token,
                     onSuccess = {
-                        // Guardar nombre de Google en jugador
                         val nombreGoogle = account.displayName ?: "Usuario Google"
-                        jugador.value = Jugador(
-                            NombreJugador = nombreGoogle,
-                            Contrasena = null,
-                            NumMonedas = 1000
-                        )
 
-                        navController.navigate("menu") {
-                            popUpTo("login") { inclusive = true }
+                        scope.launch {
+                            val dao = App.database.jugadorDao()
+
+                            // Buscar si ya existe un jugador con ese nombre
+                            val existente = withContext(Dispatchers.IO) {
+                                dao.obtenerPorNombre(nombreGoogle)
+                            }
+
+                            val jugadorFinal = if (existente != null) {
+                                existente
+                            } else {
+                                val nuevo = Jugador(
+                                    NombreJugador = nombreGoogle,
+                                    Contrasena = null,
+                                    NumMonedas = 1000
+                                )
+                                withContext(Dispatchers.IO) {
+                                    dao.insertar(nuevo)
+                                }
+                                nuevo
+                            }
+
+                            jugador.value = jugadorFinal
+
+                            // Navegar SOLO una vez
+                            navController.navigate("menu") {
+                                popUpTo("login") { inclusive = true }
+                            }
                         }
                     }
+  
                     ,
                     onError = { error.value = it.message }
                 )
