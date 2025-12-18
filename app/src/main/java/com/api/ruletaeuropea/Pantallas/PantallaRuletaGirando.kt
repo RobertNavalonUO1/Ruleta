@@ -64,9 +64,10 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import com.api.ruletaeuropea.data.entity.Jugador
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import android.util.Log
 import com.api.ruletaeuropea.data.db.obtenerPremioAcumuladoFirestore
 import com.api.ruletaeuropea.data.db.resetearPremioAcumuladoFirestore
+import com.api.ruletaeuropea.data.db.rememberPremioAcumulado
+
 
 
 
@@ -94,7 +95,7 @@ fun PantallaRuletaGirando(
 ) {
     var resultado by rememberSaveable { mutableStateOf<Int?>(null) }
     var mostrarResultado by rememberSaveable { mutableStateOf(false) }
-    val premioAcumulado = remember { mutableStateOf(0) }
+    val premioAcumulado = rememberPremioAcumulado()
 
 
 
@@ -145,7 +146,7 @@ fun PantallaRuletaGirando(
             // Indicador de monedas
             CoinsDisplay(cantidad = jugador.NumMonedas)
 
-            Spacer(modifier = Modifier.width(12.dp)) // separador horizontal
+            Spacer(modifier = Modifier.width(12.dp))
 
             // Premio acumulado
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -300,7 +301,7 @@ private fun ResultadoSection(
     apuestas: MutableState<List<Apuesta>>,
     resultado: Int,
     onActualizarSaldo: (Int) -> Unit,
-    premioAcumulado: MutableState<Int>
+    premioAcumulado: State<Int>
 ) {
     val context = LocalContext.current
     val view = LocalView.current
@@ -388,7 +389,7 @@ private fun ResultadoSection(
 
                 // Resetear premio acumulado en memoria y Firestore
                 resetearPremioAcumuladoFirestore()
-                premioAcumulado.value = 0
+                resetearPremioAcumuladoFirestore()
 
             }
 
