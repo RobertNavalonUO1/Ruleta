@@ -1,43 +1,41 @@
 package com.api.ruletaeuropea.pantallas
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.api.ruletaeuropea.App
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.ui.draw.scale
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import androidx.compose.runtime.rememberCoroutineScope
-import com.api.ruletaeuropea.data.entity.Jugador
+import com.api.ruletaeuropea.data.db.JugadorTop
+import com.api.ruletaeuropea.data.db.obtenerTop10Suspend
 
 
 
 
 @Composable
 fun PantallaRanking(navController: NavController) {
-    val dao = App.database.jugadorDao()
-    val rankingFlow = dao.verRanking(50)
-    val lista by rankingFlow.collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
+    var top10 by remember { mutableStateOf<List<JugadorTop>>(emptyList()) } // Estado reactivo
+
+    // 🔹 Cargar jugadores desde Firestore al componer la pantalla
+    LaunchedEffect(Unit) {
+        top10 = try {
+            obtenerTop10Suspend() // suspend fun que hace la query a Firestore
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -68,11 +66,12 @@ fun PantallaRanking(navController: NavController) {
                 verticalArrangement = Arrangement.spacedBy(5.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                itemsIndexed(lista) { index, jugador ->
-                    RankingCard(index = index, jugador = jugador)
+                itemsIndexed(top10) { index, jugador ->
+                    RankingCardTop(index = index, jugador = jugador)
                 }
             }
         }
+
         // Boton Exit
         PlantillaBoton(
             text = "Exit",
@@ -87,35 +86,11 @@ fun PantallaRanking(navController: NavController) {
                 .width(140.dp)
                 .height(60.dp)
         )
-
-        //Boton Borrar todos
-        PlantillaBoton(
-            text = "Delete all",
-            onClick = {
-                scope.launch {
-                    try {
-                        withContext(Dispatchers.IO) {
-                            App.database.jugadorDao().borrarTodos()
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-            },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(bottom = 100.dp, end = 35.dp)
-                .width(140.dp)
-                .height(60.dp),
-            colors = listOf(Color.White, Color(0xFF666666)),
-            textColor = Color.Black
-        )
-
     }
 }
 
 @Composable
-private fun RankingCard(index: Int, jugador: Jugador) {
+private fun RankingCardTop(index: Int, jugador: JugadorTop) {
     val amarilloBase = Color(0xFFFFE97F)
     val amarilloClaro = Color(0xFFFFF3B0)
     val amarilloOscuro = Color(0xFFE6C95C)
@@ -124,9 +99,9 @@ private fun RankingCard(index: Int, jugador: Jugador) {
         modifier = Modifier
             .fillMaxWidth(0.5f)
             .height(35.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = Color.Transparent),
         shape = RoundedCornerShape(6.dp),
-        elevation = CardDefaults.cardElevation(0.dp)
+        elevation = androidx.compose.material3.CardDefaults.cardElevation(0.dp)
     ) {
         Box(
             modifier = Modifier
@@ -146,22 +121,13 @@ private fun RankingCard(index: Int, jugador: Jugador) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "${index + 1}. ${jugador.NombreJugador}",
+                    text = "${index + 1}. ${jugador.nombre}",
                     fontSize = 18.sp,
                     color = Color(0xFF1A1A1A),
                     fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
                 )
-
-                /* Cuando la clase apuesta tenga fecha y hora de la apuesta.
                 Text(
-                    text = "${apuesta.Fecha} ${apuesta.Hora}"
-                    fontSize = 18.sp,
-                    color = Color(0xFF1A1A1A),
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
-                )*/
-
-                Text(
-                    text = "${jugador.NumMonedas} C",
+                    text = "${jugador.saldo} C",
                     fontSize = 18.sp,
                     color = Color(0xFF1A1A1A),
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
@@ -170,34 +136,3 @@ private fun RankingCard(index: Int, jugador: Jugador) {
         }
     }
 }
-
-@Composable
-fun PlantillaBoton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    colors: List<Color> = listOf(Color(0xFFFFFFFF), Color(0xFF666666)),
-    textColor: Color = Color.Black
-) {
-    val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
-    val scale by animateFloatAsState(targetValue = if (pressed) 0.97f else 1f, label = "press-scale")
-
-    Box(
-        modifier = modifier
-            .scale(scale)
-            .clip(RoundedCornerShape(16.dp))
-            .background(Brush.verticalGradient(colors = colors))
-            .clickable(interactionSource = interaction, indication = null) { onClick() },
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            fontSize = 20.sp,
-            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-            color = textColor
-        )
-    }
-}
-
-

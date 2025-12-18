@@ -1,3 +1,4 @@
+
 package com.api.ruletaeuropea.pantallas
 
 import com.api.ruletaeuropea.App
@@ -67,6 +68,14 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.api.ruletaeuropea.data.db.obtenerPremioAcumuladoFirestore
 import com.api.ruletaeuropea.data.db.resetearPremioAcumuladoFirestore
 import com.api.ruletaeuropea.data.db.rememberPremioAcumulado
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.scale
+import androidx.compose.animation.core.animateFloatAsState
+import com.api.ruletaeuropea.data.db.JugadoresFirebase
 
 
 
@@ -384,6 +393,9 @@ private fun ResultadoSection(
                 // Actualizar el saldo en la base de datos
                 daoJugador.actualizar(jugador.copy(NumMonedas = saldoFinal))
 
+                // Actualizar el jugador en Firestore
+                JugadoresFirebase.guardarJugador(jugador.copy(NumMonedas = saldoFinal))
+
                 // Notificar la UI
                 onActualizarSaldo(totalGanadoEstaRonda)
 
@@ -658,6 +670,34 @@ private fun ActionButtons(
     }
 }
 
+@Composable
+fun PlantillaBoton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    colors: List<Color> = listOf(Color(0xFFFFFFFF), Color(0xFF666666)),
+    textColor: Color = Color.Black
+) {
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val scale by animateFloatAsState(targetValue = if (pressed) 0.97f else 1f, label = "press-scale")
+
+    Box(
+        modifier = modifier
+            .scale(scale)
+            .clip(RoundedCornerShape(16.dp))
+            .background(Brush.verticalGradient(colors = colors))
+            .clickable(interactionSource = interaction, indication = null) { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = textColor
+        )
+    }
+}
 
 /*
 ================ Manual Test Checklist (marcar al revisar PR) ================
