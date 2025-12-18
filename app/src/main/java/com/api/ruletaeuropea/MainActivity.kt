@@ -35,16 +35,29 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.compose.ui.unit.dp
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.ui.graphics.Color
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+
 
 
 
 class MainActivity : ComponentActivity() {
 
-    private var isMuted = true
+    private var isMuted = false
     private val LOCATION_PERMISSION_REQUEST_CODE = 2001
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            hide(WindowInsetsCompat.Type.systemBars())
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
 
         // Inicializamos Firebase
         val auth = FirebaseAuth.getInstance()
@@ -84,7 +97,13 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .padding(16.dp)
-                    ) { /* Icono aquí */ }
+                    ) {
+                        Icon(
+                            imageVector = if (mutedState) Icons.Filled.VolumeOff else Icons.Filled.VolumeUp,
+                            contentDescription = "Toggle sound",
+                            tint = Color.White
+                        )
+                    }
 
                     val context = LocalContext.current
                     val pickAudioLauncher = rememberLauncherForActivityResult(

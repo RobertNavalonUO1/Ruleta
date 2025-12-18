@@ -345,24 +345,8 @@ fun PantallaLogin(
                     ) {
                         Text("Create", color = dorado)
                     }
-
-                    OutlinedButton(
-                        onClick = {
-                            jugador.value = Jugador(
-                                NombreJugador = "Guest",
-                                Contrasena = null,
-                                NumMonedas = 1000
-                            )
-                            navController.navigate("menu") {
-                                popUpTo("login") { inclusive = true }
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
-                        border = BorderStroke(1.dp, dorado)
-                    ) {
-                        Text("Guest", color = dorado)
-                    }
                 }
+
 
                 Spacer(Modifier.height(12.dp))
 

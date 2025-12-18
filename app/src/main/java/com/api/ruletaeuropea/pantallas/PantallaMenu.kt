@@ -118,31 +118,10 @@ fun PantallaMenu(
                                 saldo = jugador.value.NumMonedas,
                                 nivel = 1,
                                 progreso = 0.35f,
-                                onRecargar = {
-                                    snackbarHostState.currentSnackbarData?.dismiss()
-                                    scope.launch { snackbarHostState.showSnackbar("Abre tienda (pendiente)") }
-                                }
                             )
 
                             Spacer(modifier = Modifier.height(5.dp))
 
-                            AccesosRapidos(
-                                onPrivada = {
-                                    snackbarHostState.currentSnackbarData?.dismiss()
-                                    scope.launch { snackbarHostState.showSnackbar("Creando mesa privada…") }
-                                },
-                                onPractica = {
-                                    snackbarHostState.currentSnackbarData?.dismiss()
-                                    scope.launch { snackbarHostState.showSnackbar("Entrando en modo práctica…") }
-                                },
-                                onMulti = {
-                                    snackbarHostState.currentSnackbarData?.dismiss()
-                                    scope.launch { snackbarHostState.showSnackbar("Buscando partidas multijugador…") }
-                                }
-                            )
-                            Spacer(modifier = Modifier.height(5.dp))
-
-                            UltimosResultados(nums = listOf(14, 0, 29, 3, 21, 7, 17, 32, 1, 9))
 
                             MenuButtons(
                                 onPlay = {
@@ -177,10 +156,6 @@ fun PantallaMenu(
                                     saldo = jugador.value.NumMonedas,
                                     nivel = 1,
                                     progreso = 0.35f,
-                                    onRecargar = {
-                                        snackbarHostState.currentSnackbarData?.dismiss()
-                                        scope.launch { snackbarHostState.showSnackbar("Abre tienda (pendiente)") }
-                                    }
                                 )
 
                                 // Premio acumulado
@@ -207,20 +182,6 @@ fun PantallaMenu(
                                     )
                                 }
 
-                                AccesosRapidos(
-                                    onPrivada = {
-                                        snackbarHostState.currentSnackbarData?.dismiss()
-                                        scope.launch { snackbarHostState.showSnackbar("Creando mesa privada…") }
-                                    },
-                                    onPractica = {
-                                        snackbarHostState.currentSnackbarData?.dismiss()
-                                        scope.launch { snackbarHostState.showSnackbar("Entrando en modo práctica…") }
-                                    },
-                                    onMulti = {
-                                        snackbarHostState.currentSnackbarData?.dismiss()
-                                        scope.launch { snackbarHostState.showSnackbar("Buscando partidas multijugador…") }
-                                    }
-                                )
 
                             }
                             Column( //Columna Derecha:
@@ -350,7 +311,7 @@ private fun MenuButtons(
 }
 
 @Composable
-private fun CardSaldo(saldo: Int, nivel: Int, progreso: Float, onRecargar: () -> Unit) {
+private fun CardSaldo(saldo: Int, nivel: Int, progreso: Float) {
     val dorado = Color(0xFFFFD700)
     val shape = RoundedCornerShape(16.dp)
     val progresoClamped = progreso.coerceIn(0f, 1f)
@@ -372,9 +333,7 @@ private fun CardSaldo(saldo: Int, nivel: Int, progreso: Float, onRecargar: () ->
                 Text("Saldo", color = Color.White, fontWeight = FontWeight.SemiBold)
                 Text("€ ${saldo.coerceAtLeast(0)}", color = dorado, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             }
-            OutlinedButton(onClick = onRecargar, border = BorderStroke(1.dp, dorado), colors = ButtonDefaults.outlinedButtonColors(contentColor = dorado)) {
-                Text("Recargar")
-            }
+
         }
         LinearProgressIndicator(
             progress = { progresoClamped },
