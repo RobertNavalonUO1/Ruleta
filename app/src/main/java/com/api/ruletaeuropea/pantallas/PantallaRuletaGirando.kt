@@ -382,28 +382,31 @@ private fun ResultadoSection(
             val premio = obtenerPremioAcumuladoFirestore()
 
             // Total que el jugador debe recibir esta ronda (pago + premio acumulado)
+
             val totalGanadoEstaRonda = pagoTotal + premio
 
             if (apuestasGanadoras.isNotEmpty()) {
 
-                val saldoInicial = jugador.NumMonedas
-                // Calcular el nuevo saldo del jugador
                 val saldoFinal = jugador.NumMonedas + totalGanadoEstaRonda
 
-                // Actualizar el saldo en la base de datos
                 daoJugador.actualizar(jugador.copy(NumMonedas = saldoFinal))
-
-                // Actualizar el jugador en Firestore
                 JugadoresFirebase.guardarJugador(jugador.copy(NumMonedas = saldoFinal))
 
-                // Notificar la UI
                 onActualizarSaldo(totalGanadoEstaRonda)
 
-                // Resetear premio acumulado en memoria y Firestore
                 resetearPremioAcumuladoFirestore()
                 resetearPremioAcumuladoFirestore()
 
+            } else {
+
+                val saldoFinal = jugador.NumMonedas - totalPerdido
+
+                daoJugador.actualizar(jugador.copy(NumMonedas = saldoFinal))
+                JugadoresFirebase.guardarJugador(jugador.copy(NumMonedas = saldoFinal))
+
+                onActualizarSaldo(-totalPerdido)
             }
+
 
             // Insertar apuestas y generar historial
             apuestas.value.forEach { apuesta ->

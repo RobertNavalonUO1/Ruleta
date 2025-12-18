@@ -17,8 +17,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.compose.runtime.rememberCoroutineScope
 import com.api.ruletaeuropea.data.db.JugadorTop
-import com.api.ruletaeuropea.data.db.obtenerTop10Suspend
-import com.api.ruletaeuropea.Pantallas.data.remote.obtenerTop10Rest
+import com.api.ruletaeuropea.pantallas.data.remote.obtenerTop10Rest
 
 
 
@@ -28,7 +27,7 @@ fun PantallaRanking(navController: NavController) {
     val scope = rememberCoroutineScope()
     var top10 by remember { mutableStateOf<List<JugadorTop>>(emptyList()) } // Estado reactivo
 
-    // 🔹 Cargar jugadores desde Firestore al componer la pantalla
+    // Cargar jugadores desde Firestore al componer la pantalla
     LaunchedEffect(Unit) {
         top10 = try {
             obtenerTop10Rest()

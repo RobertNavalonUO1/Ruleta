@@ -1,4 +1,4 @@
-package com.api.ruletaeuropea.Pantallas.data.remote
+package com.api.ruletaeuropea.pantallas.data.remote
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
