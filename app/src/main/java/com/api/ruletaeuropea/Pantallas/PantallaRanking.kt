@@ -18,6 +18,7 @@ import androidx.navigation.NavController
 import androidx.compose.runtime.rememberCoroutineScope
 import com.api.ruletaeuropea.data.db.JugadorTop
 import com.api.ruletaeuropea.data.db.obtenerTop10Suspend
+import com.api.ruletaeuropea.Pantallas.data.remote.obtenerTop10Rest
 
 
 
@@ -30,7 +31,7 @@ fun PantallaRanking(navController: NavController) {
     // 🔹 Cargar jugadores desde Firestore al componer la pantalla
     LaunchedEffect(Unit) {
         top10 = try {
-            obtenerTop10Suspend() // suspend fun que hace la query a Firestore
+            obtenerTop10Rest()
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()

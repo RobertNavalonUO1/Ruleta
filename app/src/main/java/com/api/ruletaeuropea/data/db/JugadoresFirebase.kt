@@ -7,11 +7,6 @@ import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
 import com.api.ruletaeuropea.data.entity.Jugador
 
-data class JugadorTop(
-    val nombre: String = "",
-    val saldo: Int = 0
-)
-
 object JugadoresFirebase {
 
     private val firestore = FirebaseFirestore.getInstance()
